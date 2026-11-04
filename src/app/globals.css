@@ -1,26 +1,72 @@
-@import "tailwindcss";
+@import "../styles/globals.css";
 
+/* Brand palette layered on top of BoardUI's theme. Overriding the accent ramp
+ * re-tints every BoardUI interactive surface (primary button gradient, focus
+ * ring, ghost buttons, ...) to the brand orange. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-accent-50: #fff6f1;
+  --color-accent-100: #ffeadf;
+  --color-accent-200: #fdd3bd;
+  --color-accent-300: #fab48f;
+  --color-accent-400: #f68d5c;
+  --color-accent-500: #ef6c35;
+  --color-accent-600: #dd5824;
+  --color-accent-700: #b8461c;
+  --color-accent-800: #923a1c;
+  --color-accent-900: #763219;
+  --color-accent-950: #401709;
+
+  --color-background-full: #f8f5f1;
+  --color-text-primary: #1f1611;
+  --color-text-secondary: #5a4c43;
+  --color-border-button-default: #ece4dc;
+
+  --background: #f8f5f1;
+  --surface: #ffffff;
+  --foreground: #1f1611;
+  --muted: #5a4c43;
+  --subtle: #85766b;
+  --border: #ece4dc;
+  --primary: #ef6c35;
+  --primary-hover: #dd5824;
+  --primary-soft: #fdeee5;
+  --danger: #e5484d;
+
+  /* Manrope everywhere: BoardUI's theme reads --font-inter, Tailwind's base reads --font-sans. */
+  --font-inter: var(--font-manrope);
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+
+  /* Tight tracking site-wide, including BoardUI's composite text styles. */
+  --tracking-site: -0.025em;
+  --text-body-medium--letter-spacing: var(--tracking-site);
+  --text-caption-1-semibold--letter-spacing: var(--tracking-site);
+}
+
+body {
+  letter-spacing: var(--tracking-site);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-serif);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes caret-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.caret-blink {
+  animation: caret-blink 1s steps(1) infinite;
 }
