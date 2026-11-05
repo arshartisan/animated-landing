@@ -18,8 +18,8 @@ const NAV = ["How it Works", "Use Cases", "Pricing", "Customers"];
 function Logo() {
   return (
     <a href="#" className="flex items-center gap-2 text-foreground">
-      <Emblem className="w-6" />
-      <span className="font-serif text-[1.65rem] leading-none tracking-tight">ForoD</span>
+      <Emblem className="w-7" />
+      <span className="font-serif text-[1.65rem] leading-none tracking-tight">ONO</span>
     </a>
   );
 }
@@ -39,7 +39,9 @@ export default function Home() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <ThemeToggle />
+            <div className="hidden md:block">
+              <ThemeToggle />
+            </div>
             <StarBorder>
               <ButtonLink href="#" variant="secondary">
                 Book a Free Call
@@ -48,6 +50,11 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Mobile: theme toggle floats bottom-right instead of crowding the header */}
+      <div className="fixed end-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-50 md:hidden">
+        <ThemeToggle className="rounded-full shadow-lg" />
+      </div>
 
       <main className="flex flex-1 flex-col">
         {/* Hero */}

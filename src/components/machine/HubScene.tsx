@@ -53,7 +53,7 @@ export function HubScene({ className }: { className?: string }) {
       viewBox="-470 -255 940 470"
       className={cx("scene-machine", className)}
       role="img"
-      aria-label="ForoD hub: blank documents slide in along a track, get validated under glass and leave secured"
+      aria-label="ONO hub: blank documents slide in along a track, get validated under glass and leave secured"
     >
       <defs>
         <clipPath id="hub-exit-clip">

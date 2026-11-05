@@ -24,7 +24,7 @@ const RESOLVE_DUR = 520;
 const RESET_START = 8700;
 const RESET_DUR = 600;
 
-const COMMAND = "forod resolve --all";
+const COMMAND = "ono resolve --all";
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const local = (t: number) => ((t % CYCLE) + CYCLE) % CYCLE;
