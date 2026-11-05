@@ -10,6 +10,7 @@ import {
 } from "motion/react";
 import { project, topPlane, wallX, wallY, type Pt } from "./iso";
 import { IsoBox } from "./primitives";
+import { cx } from "@/utils/cx";
 
 // ── Timing (ms) ──────────────────────────────────────────────────────
 const CYCLE = 6400;
@@ -28,15 +29,16 @@ const reset = (l: number) => 1 - ease(span(l, RESET));
 const pulse = (p: number) => Math.sin(clamp01(p) * Math.PI);
 
 // ── Palette ──────────────────────────────────────────────────────────
-const INK = "#1f1611";
+// Every color is a theme token (styles/scene.css), so the scene follows light/dark.
+const INK = "var(--scene-ink)";
 const C = {
-  accent: "var(--primary)",
-  accentSoft: "#fdd3bd",
-  strap: "#dccbbf",
-  strapDark: "#c7b1a2",
-  screen: "#1f1611",
-  paper: "#ffffff",
-  line: "#dccbbf",
+  accent: "var(--scene-accent)",
+  accentSoft: "var(--scene-accent-soft)",
+  strap: "var(--scene-line)",
+  strapDark: "var(--scene-stroke)",
+  screen: "var(--scene-solid)",
+  paper: "var(--scene-paper)",
+  line: "var(--scene-line)",
 };
 
 const stroke = {
@@ -68,19 +70,9 @@ export function PaymentScene({ className }: { className?: string }) {
   return (
     <svg
       viewBox="-370 -330 720 560"
-      className={className}
+      className={cx("scene-payment", className)}
       role="img"
       aria-label="A phone pays a card terminal over a cable, the terminal prints a receipt and a smartwatch logs the approval"
-      style={
-        {
-          "--iso-ink": INK,
-          "--iso-top": "#ffffff",
-          "--iso-wall-l1": "#ffffff",
-          "--iso-wall-l2": "#f7f2ed",
-          "--iso-wall-r1": "#ebe2da",
-          "--iso-wall-r2": "#f5eee8",
-        } as React.CSSProperties
-      }
     >
       <Shadows />
       <WatchStand t={t} />
@@ -95,7 +87,7 @@ export function PaymentScene({ className }: { className?: string }) {
 function Shadows() {
   const off = 16;
   return (
-    <g transform={topPlane(0)} fill={INK}>
+    <g transform={topPlane(0)} fill="var(--scene-shadow)">
       <rect x={STAND.x + 4} y={STAND.y + off} width={STAND.w} height={STAND.d} rx={8} />
       <rect x={TERM.x + 6} y={TERM.y + off} width={TERM.w} height={TERM.d} rx={14} />
       <rect x={PHONE.x + 2} y={PHONE.y + 10} width={PHONE.w} height={PHONE.d} rx={16} />
@@ -139,7 +131,7 @@ function WatchStand({ t }: { t: MotionValue<number> }) {
       <g transform={topPlane(0)}>
         <rect x={S.x + S.w - 6} y={STRAP.y} width={112} height={STRAP.d} rx={14} fill={C.strap} {...stroke} />
         {[0, 1, 2].map((i) => (
-          <ellipse key={i} cx={S.x + S.w + 46 + i * 20} cy={STRAP.y + STRAP.d / 2} rx={3.4} ry={3.4} fill={INK} />
+          <ellipse key={i} cx={S.x + S.w + 46 + i * 20} cy={STRAP.y + STRAP.d / 2} rx={3.4} ry={3.4} fill="var(--scene-solid)" />
         ))}
       </g>
 
@@ -157,8 +149,8 @@ function WatchStand({ t }: { t: MotionValue<number> }) {
         />
         <g transform={`translate(${cu} ${cv})`}>
           <motion.circle r={24} fill={C.accent} style={{ opacity: glow }} />
-          <circle r={19} fill="none" stroke="#3a2c23" strokeWidth={5} />
-          <circle r={11} fill="none" stroke="#3a2c23" strokeWidth={5} />
+          <circle r={19} fill="none" stroke="var(--scene-solid-raised)" strokeWidth={5} />
+          <circle r={11} fill="none" stroke="var(--scene-solid-raised)" strokeWidth={5} />
           <motion.circle
             r={19}
             fill="none"
@@ -184,12 +176,12 @@ function WatchStand({ t }: { t: MotionValue<number> }) {
           textAnchor="middle"
           fontSize={8.5}
           fontWeight={600}
-          fill="#fff"
+          fill="var(--scene-on-accent)"
         >
           Approved
         </text>
         {/* Crown */}
-        <rect x={WATCH.y - 4} y={cv - 7} width={5} height={14} rx={2} fill="#fff" {...stroke} />
+        <rect x={WATCH.y - 4} y={cv - 7} width={5} height={14} rx={2} fill="var(--scene-paper)" {...stroke} />
       </g>
     </g>
   );
@@ -211,9 +203,9 @@ function Terminal({ t }: { t: MotionValue<number> }) {
   return (
     <g>
       <IsoBox {...T} r={14}>
-        <rect x={T.x + 52} y={T.y + 8} width={T.w - 60} height={T.d - 16} rx={10} fill="#faf6f2" {...stroke} />
+        <rect x={T.x + 52} y={T.y + 8} width={T.w - 60} height={T.d - 16} rx={10} fill="var(--scene-paper-tint)" {...stroke} />
         {/* NFC pad */}
-        <circle cx={T.x + 72} cy={T.y + T.d / 2} r={16} fill="#fff" {...stroke} />
+        <circle cx={T.x + 72} cy={T.y + T.d / 2} r={16} fill="var(--scene-paper)" {...stroke} />
         {nfc.map((i) => (
           <NfcArc key={i} i={i} t={t} cx={T.x + 66} cy={T.y + T.d / 2} />
         ))}
@@ -226,9 +218,9 @@ function Terminal({ t }: { t: MotionValue<number> }) {
           const isOk = k === "ok";
           return (
             <g key={k}>
-              <rect x={x} y={y} width={kx - 3} height={ky - 5} rx={2.5} fill={isOk ? C.accent : "#fff"} {...stroke} strokeWidth={1} />
+              <rect x={x} y={y} width={kx - 3} height={ky - 5} rx={2.5} fill={isOk ? C.accent : "var(--scene-paper)"} {...stroke} strokeWidth={1} />
               {isOk ? (
-                <motion.rect x={x} y={y} width={kx - 3} height={ky - 5} rx={2.5} fill="#fff" style={{ opacity: confirm }} />
+                <motion.rect x={x} y={y} width={kx - 3} height={ky - 5} rx={2.5} fill="var(--scene-on-accent)" style={{ opacity: confirm }} />
               ) : (
                 <text
                   x={x + (kx - 3) / 2}
@@ -249,7 +241,7 @@ function Terminal({ t }: { t: MotionValue<number> }) {
 
       {/* Printer head with paper slot */}
       <IsoBox {...PRINTER} z={T.h} r={10}>
-        <rect x={SLOT_X - 1.5} y={PRINTER.y + 10} width={3} height={PRINTER.d - 20} rx={1.5} fill={INK} />
+        <rect x={SLOT_X - 1.5} y={PRINTER.y + 10} width={3} height={PRINTER.d - 20} rx={1.5} fill="var(--scene-solid)" />
       </IsoBox>
       <Receipt t={t} />
     </g>
@@ -351,11 +343,11 @@ function Phone({ t }: { t: MotionValue<number> }) {
       <IsoBox {...P} r={16}>
         <rect x={sx} y={sy} width={sw} height={sd} rx={11} fill={C.screen} {...stroke} />
         {/* Ghost card behind */}
-        <rect x={card.x + 3} y={card.y + 24} width={card.w - 6} height={card.d} rx={6} fill="#3a2c23" />
-        <motion.path d={wave} fill="none" stroke="#fff" strokeWidth={1.3} strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+        <rect x={card.x + 3} y={card.y + 24} width={card.w - 6} height={card.d} rx={6} fill="var(--scene-solid-raised)" />
+        <motion.path d={wave} fill="none" stroke="var(--scene-on-accent)" strokeWidth={1.3} strokeLinecap="round" vectorEffect="non-scaling-stroke" />
         {/* Speaker dots on the bottom edge */}
         {[0, 1, 2, 3].map((i) => (
-          <circle key={i} cx={P.x + 20 + i * 6} cy={P.y + P.d - 3.5} r={1.1} fill={INK} />
+          <circle key={i} cx={P.x + 20 + i * 6} cy={P.y + P.d - 3.5} r={1.1} fill="var(--scene-solid)" />
         ))}
       </IsoBox>
 
@@ -366,12 +358,12 @@ function Phone({ t }: { t: MotionValue<number> }) {
             <rect x={card.x} y={card.y} width={card.w} height={card.d} rx={6} />
           </clipPath>
           <rect x={card.x} y={card.y} width={card.w} height={card.d} rx={6} fill={C.accent} {...stroke} />
-          <motion.rect x={card.x} y={card.y} width={card.w} height={card.d} rx={6} fill="#fff" style={{ opacity: cardGlow }} />
-          <g clipPath={`url(#${blobClip})`} fill="#fff">
+          <motion.rect x={card.x} y={card.y} width={card.w} height={card.d} rx={6} fill="var(--scene-on-accent)" style={{ opacity: cardGlow }} />
+          <g clipPath={`url(#${blobClip})`} fill="var(--scene-on-accent)">
             <ellipse cx={card.x + 22} cy={card.y + 46} rx={16} ry={20} />
             <ellipse cx={card.x + 50} cy={card.y + 36} rx={14} ry={22} />
           </g>
-          <text x={card.x + 6} y={card.y + 13} fontSize={8.5} fontWeight={700} fill="#fff">
+          <text x={card.x + 6} y={card.y + 13} fontSize={8.5} fontWeight={700} fill="var(--scene-on-accent)">
             Pay Invoice
           </text>
         </g>
@@ -379,7 +371,7 @@ function Phone({ t }: { t: MotionValue<number> }) {
 
       {/* Charging port on the front edge */}
       <g transform={wallY(P.y + P.d)}>
-        <rect x={PORT_X - 9} y={1.5} width={18} height={6} rx={2} fill="#fff" {...stroke} />
+        <rect x={PORT_X - 9} y={1.5} width={18} height={6} rx={2} fill="var(--scene-paper)" {...stroke} />
       </g>
     </g>
   );
@@ -434,7 +426,7 @@ function Cable({ t }: { t: MotionValue<number> }) {
           d={CABLE_OUT}
           {...base}
           pathLength={1000}
-          stroke="#fff"
+          stroke="var(--scene-on-accent)"
           strokeWidth={2.4}
           strokeDasharray="70 1100"
           style={{ strokeDashoffset: outOffset }}
@@ -443,7 +435,7 @@ function Cable({ t }: { t: MotionValue<number> }) {
           d={CABLE_IN}
           {...base}
           pathLength={1000}
-          stroke="#fff"
+          stroke="var(--scene-on-accent)"
           strokeWidth={2.4}
           strokeDasharray="140 1100"
           style={{ strokeDashoffset: inOffset }}

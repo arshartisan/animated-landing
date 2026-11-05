@@ -113,3 +113,10 @@ export function halfSpaceClip(axis: "x" | "y", value: number, zMax = 120): strin
   const pts = corners.flatMap(([x, y]) => [project(x, y, 0), project(x, y, zMax)]);
   return toPath(hull(pts));
 }
+
+/** Screen-space outline of an axis-aligned rectangle lying on the wall plane `axis = c`
+ * (u runs along the other ground axis, z is height). */
+export function wallRect(axis: "x" | "y", c: number, u0: number, u1: number, z0: number, z1: number): string {
+  const at = (u: number, z: number) => (axis === "y" ? project(u, c, z) : project(c, u, z));
+  return toPath([at(u0, z0), at(u1, z0), at(u1, z1), at(u0, z1)]);
+}

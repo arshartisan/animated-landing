@@ -1,0 +1,135 @@
+/* Decorative interaction effects, adapted from React Bits (Star Border, Spotlight Card). */
+
+/* ── Star border ───────────────────────────────────────────────────── */
+.star-border {
+  --star-color: var(--primary);
+  --star-speed: 6s;
+  --star-thickness: 2px;
+  position: relative;
+  display: inline-flex;
+  padding: var(--star-thickness);
+  border-radius: 9999px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.star-border > .star-border-glow {
+  position: absolute;
+  z-index: 0;
+  width: 300%;
+  height: 50%;
+  border-radius: 50%;
+  opacity: 1;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--star-color), transparent 14%);
+  animation: var(--star-speed) linear infinite alternate;
+}
+
+.star-border > .star-border-glow[data-edge="bottom"] {
+  right: -250%;
+  bottom: -11px;
+  animation-name: star-movement-bottom;
+}
+
+.star-border > .star-border-glow[data-edge="top"] {
+  left: -250%;
+  top: -10px;
+  animation-name: star-movement-top;
+}
+
+.star-border > :not(.star-border-glow) {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes star-movement-bottom {
+  0% { transform: translate(0%, 0%); opacity: 1; }
+  100% { transform: translate(-100%, 0%); opacity: 0; }
+}
+
+@keyframes star-movement-top {
+  0% { transform: translate(0%, 0%); opacity: 1; }
+  100% { transform: translate(100%, 0%); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .star-border > .star-border-glow { animation: none; opacity: 0; }
+}
+
+/* ── Spotlight card ────────────────────────────────────────────────── */
+.spotlight-card {
+  --spotlight-color: color-mix(in oklab, var(--primary) 16%, transparent);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+html.dark .spotlight-card {
+  --spotlight-color: color-mix(in oklab, var(--primary) 22%, transparent);
+}
+
+.spotlight-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    var(--spotlight-color),
+    transparent 80%
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.spotlight-card:hover::before,
+.spotlight-card:focus-within::before {
+  opacity: 0.9;
+}
+
+/* ── Border glow ───────────────────────────────────────────────────── */
+/* Lights the border segment nearest the pointer, brighter as it nears the edge. */
+@property --edge-proximity {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.border-glow {
+  --glow-color: var(--primary);
+  --glow-cone: 80deg;
+  --cursor-angle: 0deg;
+  transition: --edge-proximity 0.35s ease;
+}
+
+.border-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: inherit;
+  background: conic-gradient(
+    from calc(var(--cursor-angle) - var(--glow-cone)) at 50% 50%,
+    transparent 0deg,
+    var(--glow-color) var(--glow-cone),
+    transparent calc(var(--glow-cone) * 2)
+  );
+  /* Keep only the ring between the padding box and the border edge. */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+/* Edge line with a soft halo bleeding inward. */
+.border-glow::after {
+  padding: 2px;
+  opacity: var(--edge-proximity);
+  filter: drop-shadow(0 0 6px var(--glow-color));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .border-glow { transition: none; }
+}

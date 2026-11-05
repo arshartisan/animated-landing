@@ -8,32 +8,25 @@ import {
   useTransform,
   type MotionValue,
 } from "motion/react";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
+import { cx } from "@/utils/cx";
 import { project, topPlane, wallY, type Pt } from "./iso";
 import { Cylinder, IsoBox } from "./primitives";
 import { Panel, WallText } from "./UseCaseScenes";
 
 // ── Palette & helpers ────────────────────────────────────────────────
-const INK = "#1f1611";
-const ACCENT = "var(--primary)";
-const ACCENT_SOFT = "#fdd3bd";
-const GREY = "#ebe4dd";
-const GREY_DARK = "#d9cfc6";
-const LINE = "#d6cabf";
-
-const VARS = {
-  "--iso-ink": "#bfb1a5",
-  "--iso-top": "#ffffff",
-  "--iso-wall-l1": "#fcfaf8",
-  "--iso-wall-l2": "#f3eee9",
-  "--iso-wall-r1": "#ebe4dd",
-  "--iso-wall-r2": "#f6f1ec",
-} as CSSProperties;
+// Every color is a theme token (styles/scene.css), so the scene follows light/dark.
+const INK = "var(--scene-ink)";
+const ACCENT = "var(--scene-accent)";
+const ACCENT_SOFT = "var(--scene-accent-soft)";
+const GREY = "var(--scene-fill)";
+const GREY_DARK = "var(--scene-fill-strong)";
+const LINE = "var(--scene-line)";
 
 const ORANGE_BOX = {
-  top: "#f48a55",
-  left: ["#ef6c35", "#e8642e"] as [string, string],
-  right: ["#dd5824", "#e4602a"] as [string, string],
+  top: "var(--scene-accent-top)",
+  left: ["var(--scene-accent-l1)", "var(--scene-accent-l2)"] as [string, string],
+  right: ["var(--scene-accent-r1)", "var(--scene-accent-r2)"] as [string, string],
 };
 
 const CYCLE = 6400;
@@ -59,10 +52,9 @@ export function WorkspaceScene({ className }: { className?: string }) {
   return (
     <svg
       viewBox="-360 -320 720 500"
-      className={className}
+      className={cx("scene-workspace", className)}
       role="img"
       aria-label="A workspace with a monitor showing ratings and charts, a keyboard, a QR code generator and a phone with client profiles"
-      style={VARS}
     >
       <Floor t={t} />
       <PieChart t={t} />
@@ -122,7 +114,7 @@ function Marker({ at, t, delay }: { at: Pt; t: MotionValue<number>; delay: numbe
   return (
     <g>
       <motion.ellipse cx={at[0]} cy={at[1]} rx={rx} ry={ry} fill="none" stroke={ACCENT} strokeWidth={1} style={{ opacity }} />
-      <ellipse cx={at[0]} cy={at[1]} rx={9} ry={5.2} fill="#fff" stroke={LINE} strokeWidth={1} />
+      <ellipse cx={at[0]} cy={at[1]} rx={9} ry={5.2} fill="var(--scene-paper)" stroke={LINE} strokeWidth={1} />
       <ellipse cx={at[0]} cy={at[1]} rx={4.6} ry={2.7} fill={ACCENT} />
     </g>
   );
@@ -137,7 +129,7 @@ function PieChart({ t }: { t: MotionValue<number> }) {
     `M${c.x} ${c.y}L${c.x + r * Math.cos(a0)} ${c.y + r * Math.sin(a0)}A${r} ${r} 0 0 1 ${c.x + r * Math.cos(a1)} ${c.y + r * Math.sin(a1)}Z`;
   return (
     <g>
-      <Cylinder x={c.x} y={c.y} r={r} h={14} side="#f1ebe5" stroke="#bfb1a5" />
+      <Cylinder x={c.x} y={c.y} r={r} h={14} side="var(--iso-wall-l2)" stroke="var(--scene-stroke)" />
       <g transform={topPlane(14)}>
         <path d={wedge(-0.4, 1.5)} fill={GREY} />
         {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -146,7 +138,7 @@ function PieChart({ t }: { t: MotionValue<number> }) {
       </g>
       <motion.g style={{ y: lift }}>
         <g transform={topPlane(14)}>
-          <path d={wedge(-1.9, -0.45)} fill={ACCENT} stroke="#c94f20" strokeWidth={1} {...nss} />
+          <path d={wedge(-1.9, -0.45)} fill={ACCENT} stroke="var(--scene-accent-deep)" strokeWidth={1} {...nss} />
         </g>
       </motion.g>
     </g>
@@ -162,7 +154,7 @@ function Monitor() {
       <IsoBox x={-122} y={-128} w={84} d={44} h={5} r={10} />
       <IsoBox x={-88} y={-112} z={5} w={16} d={12} h={MON.z - 5} r={3} />
       <Panel x={MON.x} y={MON.y} z={MON.z} w={MON.w} h={MON.h} t={MON.t}>
-        <rect x={MON.x + 7} y={MON.z + 7} width={MON.w - 14} height={MON.h - 14} rx={6} fill="#fff" stroke="#bfb1a5" strokeWidth={1} {...nss} />
+        <rect x={MON.x + 7} y={MON.z + 7} width={MON.w - 14} height={MON.h - 14} rx={6} fill="var(--scene-paper)" stroke="var(--scene-stroke)" strokeWidth={1} {...nss} />
         {/* Side buttons */}
         <rect x={MON.x + MON.w - 3} y={MON.z + 30} width={2} height={10} fill={GREY_DARK} />
       </Panel>
@@ -207,7 +199,7 @@ function RatingCard({ t }: { t: MotionValue<number> }) {
       <motion.rect x={C.x + 11} y={C.z + 52} height={7} rx={1.5} fill={ACCENT} width={barW} />
       {[0, 1, 2].map((i) => (
         <g key={i}>
-          <rect x={C.x + 11} y={C.z + 36 - i * 12} width={14} height={7} fill={i === 0 ? INK : "#fff"} stroke={GREY_DARK} strokeWidth={1} {...nss} />
+          <rect x={C.x + 11} y={C.z + 36 - i * 12} width={14} height={7} fill={i === 0 ? INK : "var(--scene-paper)"} stroke={GREY_DARK} strokeWidth={1} {...nss} />
           <rect x={C.x + 30} y={C.z + 36 - i * 12} width={C.w - 41 - i * 10} height={7} fill={GREY} />
         </g>
       ))}
@@ -254,7 +246,7 @@ function ChatCard({ x, y, z, w, h, t, delay, tail }: { x: number; y: number; z: 
       <Panel x={x} y={y} z={z} w={w} h={h} t={5}>
         <rect x={x + w / 2 - 24} y={z + h - 20} width={48} height={7} rx={3.5} fill={GREY} />
         <TypingDots x={x + w / 2} v={z + 18} t={t} delay={delay} />
-        {tail ? <path d={`M${x + 10} ${z}L${x + 6} ${z - 12}L${x + 22} ${z}Z`} fill="#fff" stroke="#bfb1a5" strokeWidth={1} {...nss} /> : null}
+        {tail ? <path d={`M${x + 10} ${z}L${x + 6} ${z - 12}L${x + 22} ${z}Z`} fill="var(--scene-paper)" stroke="var(--scene-stroke)" strokeWidth={1} {...nss} /> : null}
       </Panel>
     </g>
   );
@@ -293,11 +285,11 @@ function Keyboard({ t }: { t: MotionValue<number> }) {
       {Array.from({ length: KEY.rows }, (_, r) =>
         Array.from({ length: KEY.cols }, (_, c) => {
           if (r === KEY.rows - 1 && c > 3 && c < 10) return null;
-          return <rect key={`${r}-${c}`} x={ox + c * pitch} y={oy + r * pitch} width={KEY.size} height={KEY.size} rx={2} fill="#fff" stroke={GREY_DARK} strokeWidth={1} {...nss} />;
+          return <rect key={`${r}-${c}`} x={ox + c * pitch} y={oy + r * pitch} width={KEY.size} height={KEY.size} rx={2} fill="var(--scene-paper)" stroke={GREY_DARK} strokeWidth={1} {...nss} />;
         }),
       )}
       {/* Space bar */}
-      <rect x={ox + 4 * pitch} y={oy + (KEY.rows - 1) * pitch} width={6 * pitch - KEY.gap} height={KEY.size} rx={2} fill="#fff" stroke={GREY_DARK} strokeWidth={1} {...nss} />
+      <rect x={ox + 4 * pitch} y={oy + (KEY.rows - 1) * pitch} width={6 * pitch - KEY.gap} height={KEY.size} rx={2} fill="var(--scene-paper)" stroke={GREY_DARK} strokeWidth={1} {...nss} />
       <motion.rect x={kx} y={ky} width={KEY.size} height={KEY.size} rx={2} fill={ACCENT_SOFT} stroke={ACCENT} strokeWidth={1} {...nss} />
     </IsoBox>
   );
@@ -348,9 +340,9 @@ function QrGenerator({ t }: { t: MotionValue<number> }) {
         d={QR.d}
         h={QR.h}
         r={6}
-        top="rgba(255,255,255,0.55)"
-        left={["rgba(255,255,255,0.5)", "rgba(248,243,238,0.55)"]}
-        right={["rgba(240,233,226,0.6)", "rgba(250,246,242,0.5)"]}
+        top="var(--scene-glass-top)"
+        left={["var(--scene-glass-l1)", "var(--scene-glass-l2)"]}
+        right={["var(--scene-glass-r1)", "var(--scene-glass-r2)"]}
       />
 
       <g transform={wallY(QR.y + QR.d)}>
@@ -359,7 +351,7 @@ function QrGenerator({ t }: { t: MotionValue<number> }) {
             b === "1" ? <rect key={`${r}-${c}`} x={qu + c * cell} y={qv - r * cell} width={cell - 0.6} height={cell - 0.6} fill={INK} /> : null,
           ),
         )}
-        <rect x={QR.x + 8} y={10} width={QR.w - 16} height={26} rx={5} fill="#fff" stroke="#bfb1a5" strokeWidth={1} {...nss} />
+        <rect x={QR.x + 8} y={10} width={QR.w - 16} height={26} rx={5} fill="var(--scene-paper)" stroke="var(--scene-stroke)" strokeWidth={1} {...nss} />
         <motion.rect x={QR.x + 8} y={10} width={QR.w - 16} height={26} rx={5} fill={ACCENT_SOFT} style={{ opacity: glow }} />
         <WallText u={QR.x + QR.w / 2} v={23} size={9} fill={ACCENT} weight={800}>
           GENERATE
@@ -377,7 +369,7 @@ function QrCube({ c, i, t }: { c: (typeof CUBES)[number]; i: number; t: MotionVa
   const y = useTransform(p, (k) => -(1 - k) * 40);
   return (
     <motion.g style={{ y, opacity: p }}>
-      <IsoBox x={c.x} y={c.y} z={c.z} w={16} d={16} h={16} r={2} top="#fff" right={ORANGE_BOX.right} />
+      <IsoBox x={c.x} y={c.y} z={c.z} w={16} d={16} h={16} r={2} top="var(--iso-top)" right={ORANGE_BOX.right} />
     </motion.g>
   );
 }
@@ -391,7 +383,7 @@ function PhoneStack({ t }: { t: MotionValue<number> }) {
   return (
     <g>
       <IsoBox x={P.x} y={P.y} w={P.w} d={P.d} h={9} r={16}>
-        <rect x={P.x + 6} y={P.y + 6} width={P.w - 12} height={P.d - 12} rx={11} fill="#f6f1ec" stroke="#bfb1a5" strokeWidth={1} {...nss} />
+        <rect x={P.x + 6} y={P.y + 6} width={P.w - 12} height={P.d - 12} rx={11} fill="var(--scene-paper-sunken)" stroke="var(--scene-stroke)" strokeWidth={1} {...nss} />
         <rect x={P.x + 14} y={P.y + 70} width={P.w - 28} height={46} rx={6} fill={GREY} />
       </IsoBox>
       <g transform={wallY(P.y + P.d)}>
@@ -414,10 +406,10 @@ function PhoneStack({ t }: { t: MotionValue<number> }) {
           d={40}
           h={52}
           r={4}
-          stroke="rgba(239,108,53,0.35)"
-          top="rgba(253,211,189,0.4)"
-          left={["rgba(253,211,189,0.45)", "rgba(253,211,189,0.3)"]}
-          right={["rgba(250,180,143,0.35)", "rgba(253,211,189,0.3)"]}
+          stroke="var(--scene-beam-stroke)"
+          top="var(--scene-beam-top)"
+          left={["var(--scene-beam-l1)", "var(--scene-beam-l2)"]}
+          right={["var(--scene-beam-r1)", "var(--scene-beam-l2)"]}
         />
       </motion.g>
 
@@ -434,7 +426,7 @@ function PhoneStack({ t }: { t: MotionValue<number> }) {
 function Avatar({ cx, cy, r, fill }: { cx: number; cy: number; r: number; fill: string }) {
   return (
     <g>
-      <circle cx={cx} cy={cy} r={r} fill="#fff" stroke={GREY_DARK} strokeWidth={1} {...nss} />
+      <circle cx={cx} cy={cy} r={r} fill="var(--scene-paper)" stroke={GREY_DARK} strokeWidth={1} {...nss} />
       <circle cx={cx} cy={cy - r * 0.25} r={r * 0.32} fill={fill} />
       <path d={`M${cx - r * 0.55} ${cy + r * 0.6}Q${cx} ${cy - r * 0.1} ${cx + r * 0.55} ${cy + r * 0.6}Z`} fill={fill} />
     </g>
@@ -482,9 +474,9 @@ function SocialBadge({ label, i, t, at }: { label: string; i: number; t: MotionV
   return (
     <motion.g style={{ y }}>
       <ellipse cx={at[0]} cy={at[1] + 3} rx={13} ry={7.5} fill={GREY_DARK} />
-      <ellipse cx={at[0]} cy={at[1]} rx={13} ry={7.5} fill="#fff" stroke="#bfb1a5" strokeWidth={1} />
+      <ellipse cx={at[0]} cy={at[1]} rx={13} ry={7.5} fill="var(--scene-paper)" stroke="var(--scene-stroke)" strokeWidth={1} />
       <ellipse cx={at[0]} cy={at[1]} rx={8} ry={4.6} fill={ACCENT} />
-      <text x={at[0]} y={at[1] + 0.5} textAnchor="middle" dominantBaseline="central" fontSize={label.length > 1 ? 4.5 : 5.5} fontWeight={800} fill="#fff">
+      <text x={at[0]} y={at[1] + 0.5} textAnchor="middle" dominantBaseline="central" fontSize={label.length > 1 ? 4.5 : 5.5} fontWeight={800} fill="var(--scene-on-accent)">
         {label}
       </text>
     </motion.g>

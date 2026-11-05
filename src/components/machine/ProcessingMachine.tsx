@@ -11,8 +11,10 @@ import {
 } from "motion/react";
 import { useRef } from "react";
 import { ApprovedDoc, CarCard, SignedDoc } from "./cards";
-import { halfSpaceClip, project, roundedPolygon, topPlane, wallX, wallY, type Pt } from "./iso";
+import { halfSpaceClip, project, roundedPolygon, topPlane, wallRect, wallX, wallY, type Pt } from "./iso";
 import { CoinStack, Cylinder, INK, IsoBox } from "./primitives";
+import { cx } from "@/utils/cx";
+import { EmblemMark } from "@/components/brand/Emblem";
 
 // ── Timing ────────────────────────────────────────────────────────────
 const STEP = 2600; // ms per conveyor step
@@ -44,8 +46,21 @@ const LANE = { from: 56, to: 106 }; // cross-axis span of both belts
 const BELT_END = 500;
 const CARD = { long: 40, short: 34 };
 
-const CLIP_LEFT = halfSpaceClip("y", BODY.y + BODY.d, 40);
-const CLIP_RIGHT = halfSpaceClip("x", BODY.x + BODY.w, 40);
+const CLIP_Z = 40;
+const MOUTH = { from: LANE.from - 4, to: LANE.to + 4 }; // wall opening span (see Machine)
+
+/**
+ * Items are visible in front of the wall plane, but an item already past the
+ * plane must only show through the opening: the wall face around it (from the
+ * belt top up to CLIP_Z) is cut out with even-odd fill, the opening punched back in.
+ */
+const beltClip = (axis: "x" | "y", c: number, wallFrom: number, wallTo: number) =>
+  halfSpaceClip(axis, c, CLIP_Z) +
+  wallRect(axis, c, wallFrom, wallTo, BELT_H, CLIP_Z) +
+  wallRect(axis, c, MOUTH.from, MOUTH.to, BELT_H, CLIP_Z);
+
+const CLIP_LEFT = beltClip("y", BODY.y + BODY.d, BODY.x, BODY.x + BODY.w);
+const CLIP_RIGHT = beltClip("x", BODY.x + BODY.w, BODY.y, BODY.y + BODY.d);
 
 // Ground footprint (dashed) around base + both belts.
 const m = 18;
@@ -78,29 +93,16 @@ export function ProcessingMachine({ className }: { className?: string }) {
     <svg
       ref={ref}
       viewBox="-420 -112 840 500"
-      className={className}
+      className={cx("scene-machine", className)}
       role="img"
       aria-label="Isometric machine processing documents on conveyor belts"
-      style={
-        {
-          "--iso-ink": "#1f1611",
-          "--iso-top": "#ffffff",
-          "--iso-wall-l1": "#fcf9f6",
-          "--iso-wall-l2": "#f3ebe4",
-          "--iso-wall-r1": "#efe2d7",
-          "--iso-wall-r2": "#f9f3ee",
-          "--iso-line": "#e9c6ae",
-          "--iso-accent": "#ef6c35",
-          "--iso-dash": "#e8c2a8",
-        } as React.CSSProperties
-      }
     >
       <defs>
         <clipPath id="clip-left">
-          <path d={CLIP_LEFT} />
+          <path d={CLIP_LEFT} clipRule="evenodd" />
         </clipPath>
         <clipPath id="clip-right">
-          <path d={CLIP_RIGHT} />
+          <path d={CLIP_RIGHT} clipRule="evenodd" />
         </clipPath>
         <filter id="led-glow" x="-200%" y="-200%" width="500%" height="500%">
           <feGaussianBlur stdDeviation="3" />
@@ -169,12 +171,12 @@ function Machine({ t }: { t: MotionValue<number> }) {
           height={BODY.d - 14}
           rx={13}
           fill="none"
-          stroke="#e9dacd"
+          stroke="var(--scene-hairline)"
           strokeWidth={1}
           vectorEffect="non-scaling-stroke"
         />
         {/* Logo plate */}
-        <rect x={cx - 50} y={cy - 50} width={100} height={100} rx={20} fill="#fdd3bd" stroke={INK} strokeWidth={1.15} vectorEffect="non-scaling-stroke" />
+        <rect x={cx - 50} y={cy - 50} width={100} height={100} rx={20} fill="var(--scene-accent-soft)" stroke={INK} strokeWidth={1.15} vectorEffect="non-scaling-stroke" />
         <motion.rect
           x={cx - 50}
           y={cy - 50}
@@ -184,21 +186,19 @@ function Machine({ t }: { t: MotionValue<number> }) {
           fill="var(--iso-accent)"
           style={{ opacity: plateGlow }}
         />
-        <rect x={cx - 40} y={cy - 40} width={80} height={80} rx={13} fill="#fcf7f3" stroke={INK} strokeWidth={1.15} vectorEffect="non-scaling-stroke" />
-        {/* Brand mark: concentric rings */}
-        <circle cx={cx} cy={cy} r={24} fill="none" stroke="var(--iso-accent)" strokeWidth={6} />
-        <circle cx={cx} cy={cy} r={13} fill="none" stroke="var(--iso-accent)" strokeWidth={6} />
-        <circle cx={cx} cy={cy} r={4.5} fill="var(--iso-accent)" />
+        <rect x={cx - 40} y={cy - 40} width={80} height={80} rx={13} fill="var(--scene-paper-tint)" stroke={INK} strokeWidth={1.15} vectorEffect="non-scaling-stroke" />
+        {/* Brand mark */}
+        <EmblemMark cx={cx} cy={cy} size={56} fill="var(--iso-accent)" />
         {/* Slot */}
-        <rect x={BODY.x + 30} y={BODY.y + BODY.d - 24} width={92} height={7} rx={3.5} fill="#f1e6dd" stroke={INK} strokeWidth={1.1} vectorEffect="non-scaling-stroke" />
+        <rect x={BODY.x + 30} y={BODY.y + BODY.d - 24} width={92} height={7} rx={3.5} fill="var(--scene-paper-recess)" stroke={INK} strokeWidth={1.1} vectorEffect="non-scaling-stroke" />
       </IsoBox>
 
       {/* Wall openings where the belts enter/exit */}
       <g transform={wallY(BODY.y + BODY.d)}>
-        <rect x={LANE.from - 4} y={BELT_H} width={LANE.to - LANE.from + 8} height={34} rx={5} fill="#1f1611" />
+        <rect x={MOUTH.from} y={BELT_H} width={MOUTH.to - MOUTH.from} height={34} rx={5} fill="var(--scene-solid)" />
       </g>
       <g transform={wallX(BODY.x + BODY.w)}>
-        <rect x={LANE.from - 4} y={BELT_H} width={LANE.to - LANE.from + 8} height={34} rx={5} fill="#1f1611" />
+        <rect x={MOUTH.from} y={BELT_H} width={MOUTH.to - MOUTH.from} height={34} rx={5} fill="var(--scene-solid)" />
       </g>
 
       {/* Bolts */}
@@ -213,7 +213,7 @@ function Machine({ t }: { t: MotionValue<number> }) {
 
       {/* Status LED */}
       <motion.ellipse cx={lx} cy={ly} rx={11} ry={6.5} fill="var(--iso-accent)" filter="url(#led-glow)" style={{ opacity: ledOpacity }} />
-      <ellipse cx={lx} cy={ly} rx={5.2} ry={3} fill="#fcc8a8" stroke="#dd5824" strokeWidth={0.8} />
+      <ellipse cx={lx} cy={ly} rx={5.2} ry={3} fill="var(--scene-accent-led)" stroke="var(--scene-accent-r1)" strokeWidth={0.8} />
       <motion.ellipse cx={lx} cy={ly - 0.5} rx={3.4} ry={1.9} fill="var(--iso-accent)" style={{ opacity: ledOpacity }} />
     </g>
   );
@@ -237,18 +237,18 @@ function Belt({ axis, t }: { axis: "x" | "y"; t: MotionValue<number> }) {
   const lines = Array.from({ length: Math.ceil(len / spacing) + 2 }, (_, i) => start - spacing + i * spacing);
 
   return (
-    <IsoBox {...box} h={BELT_H} r={4} top="#fdfaf7">
+    <IsoBox {...box} h={BELT_H} r={4} top="var(--scene-paper-tint)">
       <clipPath id={clipId}>
         <rect x={box.x + 3} y={box.y + 1} width={box.w - 6} height={box.d - 2} />
       </clipPath>
-      <rect x={box.x + 4} y={box.y + 2} width={box.w - 8} height={box.d - 4} rx={2} fill="none" stroke="#eadbcf" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+      <rect x={box.x + 4} y={box.y + 2} width={box.w - 8} height={box.d - 4} rx={2} fill="none" stroke="var(--scene-hairline)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
       <g clipPath={`url(#${clipId})`}>
         <motion.g style={{ x: tx, y: ty }}>
           {lines.map((p) =>
             axis === "y" ? (
-              <line key={p} x1={box.x + 4} x2={box.x + box.w - 4} y1={p} y2={p} stroke="#ece1d7" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+              <line key={p} x1={box.x + 4} x2={box.x + box.w - 4} y1={p} y2={p} stroke="var(--scene-hairline)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
             ) : (
-              <line key={p} y1={box.y + 4} y2={box.y + box.d - 4} x1={p} x2={p} stroke="#ece1d7" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+              <line key={p} y1={box.y + 4} y2={box.y + box.d - 4} x1={p} x2={p} stroke="var(--scene-hairline)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
             ),
           )}
         </motion.g>
@@ -322,7 +322,7 @@ function ControlPanel({ t }: { t: MotionValue<number> }) {
             width={track.to - track.from}
             height={5}
             rx={2.5}
-            fill="#f1e6dd"
+            fill="var(--scene-paper-recess)"
             stroke={INK}
             strokeWidth={1}
             vectorEffect="non-scaling-stroke"
@@ -338,9 +338,9 @@ function ControlPanel({ t }: { t: MotionValue<number> }) {
           d={knob}
           h={9}
           r={2.5}
-          top="#ef6c35"
-          left={["#dd5824", "#d1531f"]}
-          right={["#b8461c", "#c94f20"]}
+          top="var(--scene-accent-l1)"
+          left={["var(--scene-accent-r1)", "var(--scene-accent-deep)"]}
+          right={["var(--scene-accent-deeper)", "var(--scene-accent-deep)"]}
         />
       </motion.g>
       <motion.g style={{ x: bx, y: by }}>

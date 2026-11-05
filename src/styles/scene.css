@@ -1,0 +1,212 @@
+/* ─────────────────────────────────────────────────────────────────────
+ * Isometric scene palette (components/machine/*).
+ *
+ * The animated SVG scenes never hard-code colors: every fill and stroke
+ * reads one of these tokens, so flipping `.dark` on <html> re-tints the
+ * whole illustration, including the frames Motion is animating.
+ *
+ *   --scene-*   shared roles used by every scene
+ *   --iso-*     IsoBox/Cylinder face + outline colors, tuned per scene
+ *               family through the `.scene-*` classes below
+ * ───────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Ink: text, glyphs and solid marks drawn on paper */
+  --scene-ink: #1f1611;
+  /* Something that stays white on top of the accent (checks, labels) */
+  --scene-on-accent: #ffffff;
+  /* Openings, screens, cavities: always the darkest thing in the scene */
+  --scene-solid: #1f1611;
+  --scene-solid-raised: #3a2c23;
+  --scene-solid-left: #33261e;
+  --scene-solid-mid: #2d211a;
+  --scene-solid-right: #1a120d;
+  --scene-shadow: #1f1611;
+
+  /* Paper surfaces */
+  --scene-paper: #ffffff;
+  --scene-paper-tint: #fcf7f3;
+  --scene-paper-sunken: #f6f1ec;
+  --scene-paper-recess: #f1e6dd;
+
+  /* Neutral marks */
+  --scene-hairline: #ebe3db;
+  --scene-fill: #ebe4dd;
+  --scene-fill-strong: #d9cfc6;
+  --scene-line: #d6cabf;
+  --scene-stroke: #bfb1a5;
+  --scene-stroke-warm: #e3b598;
+
+  /* Accent family */
+  --scene-accent: var(--primary);
+  --scene-accent-line: #e8c2a8;
+  --scene-accent-soft: #fdd3bd;
+  --scene-accent-faint: #f3e5da;
+  --scene-accent-wash: #fdf1e9;
+  --scene-accent-led: #fcc8a8;
+  --scene-accent-top: #f48a55;
+  --scene-accent-l1: #ef6c35;
+  --scene-accent-l2: #e8642e;
+  --scene-accent-r1: #dd5824;
+  --scene-accent-r2: #e4602a;
+  --scene-accent-deep: #c94f20;
+  --scene-accent-deeper: #b8461c;
+  --scene-plate-from: #dd5824;
+  --scene-plate-to: #f7955f;
+
+  /* Translucent glass + light beam */
+  --scene-glass-top: rgba(255, 255, 255, 0.55);
+  --scene-glass-l1: rgba(255, 255, 255, 0.5);
+  --scene-glass-l2: rgba(248, 243, 238, 0.55);
+  --scene-glass-r1: rgba(240, 233, 226, 0.6);
+  --scene-glass-r2: rgba(250, 246, 242, 0.5);
+  --scene-beam-stroke: rgba(239, 108, 53, 0.35);
+  --scene-beam-top: rgba(253, 211, 189, 0.4);
+  --scene-beam-l1: rgba(253, 211, 189, 0.45);
+  --scene-beam-l2: rgba(253, 211, 189, 0.3);
+  --scene-beam-r1: rgba(250, 180, 143, 0.35);
+
+  /* Terminal (dark in both themes) */
+  --scene-terminal: #1f1611;
+  --scene-terminal-border: transparent;
+  --scene-terminal-text: #ffffff;
+  --scene-terminal-muted: #a08f83;
+  --scene-terminal-success: #fbb38a;
+  --scene-terminal-shadow: rgba(31, 22, 17, 0.45);
+}
+
+.dark {
+  --scene-ink: #f3ebe4;
+  --scene-solid: #0d0907;
+  --scene-solid-raised: #2a201a;
+  --scene-solid-left: #1c1511;
+  --scene-solid-mid: #17110e;
+  --scene-solid-right: #0a0706;
+  --scene-shadow: #090605;
+
+  --scene-paper: #2a221d;
+  --scene-paper-tint: #241d18;
+  --scene-paper-sunken: #1e1814;
+  --scene-paper-recess: #1a1411;
+
+  --scene-hairline: #2f2621;
+  --scene-fill: #3a302a;
+  --scene-fill-strong: #4a3e36;
+  --scene-line: #3d332c;
+  --scene-stroke: #5a4c43;
+  --scene-stroke-warm: #5c4536;
+
+  --scene-accent-line: #5c3f2e;
+  --scene-accent-soft: #5a2e1a;
+  --scene-accent-faint: #3a2419;
+  --scene-accent-wash: #33201a;
+  --scene-accent-led: #ffb48a;
+
+  --scene-glass-top: rgba(58, 48, 42, 0.45);
+  --scene-glass-l1: rgba(58, 48, 42, 0.4);
+  --scene-glass-l2: rgba(42, 34, 29, 0.45);
+  --scene-glass-r1: rgba(30, 24, 20, 0.5);
+  --scene-glass-r2: rgba(42, 34, 29, 0.4);
+  --scene-beam-stroke: rgba(239, 108, 53, 0.5);
+  --scene-beam-top: rgba(239, 108, 53, 0.22);
+  --scene-beam-l1: rgba(239, 108, 53, 0.26);
+  --scene-beam-l2: rgba(239, 108, 53, 0.16);
+  --scene-beam-r1: rgba(221, 88, 36, 0.24);
+
+  --scene-terminal: #0d0907;
+  --scene-terminal-border: #2e2520;
+  --scene-terminal-shadow: rgba(0, 0, 0, 0.6);
+}
+
+/* ── IsoBox face palettes per scene family ──────────────────────────── */
+
+/* Hero processing machine: bold dark outlines */
+.scene-machine {
+  --iso-ink: #1f1611;
+  --iso-top: #ffffff;
+  --iso-wall-l1: #fcf9f6;
+  --iso-wall-l2: #f3ebe4;
+  --iso-wall-r1: #efe2d7;
+  --iso-wall-r2: #f9f3ee;
+  --iso-line: #e9c6ae;
+  --iso-accent: var(--primary);
+  --iso-dash: #e8c2a8;
+}
+.dark .scene-machine {
+  --iso-ink: #a8968a;
+  --iso-top: #2e2520;
+  --iso-wall-l1: #261f1a;
+  --iso-wall-l2: #201a16;
+  --iso-wall-r1: #1a1512;
+  --iso-wall-r2: #231c18;
+  --iso-line: #6b4a36;
+  --iso-dash: #4f3929;
+}
+
+/* Self-healing hub: soft warm outlines */
+.scene-resolve {
+  --iso-ink: #e6cfbf;
+  --iso-top: #ffffff;
+  --iso-wall-l1: #faf6f2;
+  --iso-wall-l2: #f1e9e2;
+  --iso-wall-r1: #eae0d7;
+  --iso-wall-r2: #f6efe9;
+}
+
+/* Use-case cards: peach outlines */
+.scene-usecase {
+  --iso-ink: #e3b598;
+  --iso-top: #ffffff;
+  --iso-wall-l1: #fbf6f1;
+  --iso-wall-l2: #f4e7dd;
+  --iso-wall-r1: #f0dccd;
+  --iso-wall-r2: #f8efe8;
+}
+
+/* Client workspace: neutral grey outlines */
+.scene-workspace {
+  --iso-ink: #bfb1a5;
+  --iso-top: #ffffff;
+  --iso-wall-l1: #fcfaf8;
+  --iso-wall-l2: #f3eee9;
+  --iso-wall-r1: #ebe4dd;
+  --iso-wall-r2: #f6f1ec;
+}
+
+/* Payment desk: bold outlines on bright paper */
+.scene-payment {
+  --iso-ink: var(--scene-ink);
+  --iso-top: #ffffff;
+  --iso-wall-l1: #ffffff;
+  --iso-wall-l2: #f7f2ed;
+  --iso-wall-r1: #ebe2da;
+  --iso-wall-r2: #f5eee8;
+}
+
+.dark .scene-resolve,
+.dark .scene-usecase,
+.dark .scene-workspace,
+.dark .scene-payment {
+  --iso-top: #2a221d;
+  --iso-wall-l1: #241d18;
+  --iso-wall-l2: #1f1915;
+  --iso-wall-r1: #1a1411;
+  --iso-wall-r2: #211a16;
+}
+.dark .scene-resolve {
+  --iso-ink: #4a3b32;
+}
+.dark .scene-usecase {
+  --iso-ink: #5c4536;
+}
+.dark .scene-workspace {
+  --iso-ink: #5a4c43;
+}
+
+/* Terminal colors as Tailwind utilities (bg-scene-terminal, ...) */
+@theme inline {
+  --color-scene-terminal: var(--scene-terminal);
+  --color-scene-terminal-border: var(--scene-terminal-border);
+  --color-scene-terminal-text: var(--scene-terminal-text);
+  --color-scene-terminal-muted: var(--scene-terminal-muted);
+}

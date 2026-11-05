@@ -10,6 +10,7 @@ import {
   type MotionValue,
 } from "motion/react";
 import { useRef } from "react";
+import { EmblemMark } from "@/components/brand/Emblem";
 import { S, topPlane } from "./iso";
 import { IsoBox } from "./primitives";
 
@@ -79,10 +80,11 @@ const resolveAt = (rank: number) => RESOLVE_START + rank * RESOLVE_GAP;
 const doneAmount = (l: number, rank: number) =>
   clamp01((l - resolveAt(rank) - RESOLVE_DUR * 0.35) / (RESOLVE_DUR * 0.35)) * resetFade(l);
 
+// Theme tokens (styles/scene.css) so the scene follows light/dark.
 const COLORS = {
   danger: "var(--danger)",
-  accent: "var(--primary)",
-  grid: "#ebe3db",
+  accent: "var(--scene-accent)",
+  grid: "var(--scene-hairline)",
 };
 
 // ── Component ────────────────────────────────────────────────────────
@@ -102,6 +104,7 @@ export function ResolveScene({ className }: { className?: string }) {
       {/* Static floor, kept in its own SVG so the animation never repaints it */}
       <svg viewBox="-460 -250 920 500" className="absolute inset-0 h-full w-full" aria-hidden>
         <defs>
+          {/* Luminance mask (white = visible), not a palette color: theme-independent */}
           <radialGradient id="rs-grid-fade" cx="0" cy="0" r="460" gradientUnits="userSpaceOnUse" gradientTransform="scale(1 0.62)">
             <stop offset="0.35" stopColor="#fff" />
             <stop offset="1" stopColor="#000" />
@@ -114,28 +117,18 @@ export function ResolveScene({ className }: { className?: string }) {
       </svg>
       <svg
         viewBox="-460 -250 920 500"
-        className="relative w-full"
+        className="scene-resolve relative w-full"
         role="img"
         aria-label="Failed tasks around a central hub resolving one by one into completed checkmarks"
-        style={
-          {
-            "--iso-ink": "#e6cfbf",
-            "--iso-top": "#ffffff",
-            "--iso-wall-l1": "#faf6f2",
-            "--iso-wall-l2": "#f1e9e2",
-            "--iso-wall-r1": "#eae0d7",
-            "--iso-wall-r2": "#f6efe9",
-          } as React.CSSProperties
-        }
       >
         <defs>
           <linearGradient id="rs-plate" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#dd5824" />
-            <stop offset="1" stopColor="#f7955f" />
+            <stop offset="0" stopColor="var(--scene-plate-from)" />
+            <stop offset="1" stopColor="var(--scene-plate-to)" />
           </linearGradient>
           <radialGradient id="rs-glow">
-            <stop offset="0" stopColor="#ef6c35" stopOpacity="0.55" />
-            <stop offset="1" stopColor="#ef6c35" stopOpacity="0" />
+            <stop offset="0" stopColor="var(--scene-accent)" stopOpacity="0.55" />
+            <stop offset="1" stopColor="var(--scene-accent)" stopOpacity="0" />
           </radialGradient>
         </defs>
 
@@ -169,14 +162,14 @@ function Terminal({ t }: { t: MotionValue<number> }) {
     const done = TILES.filter((tile) => l > resolveAt(tile.rank) + RESOLVE_DUR * 0.5).length;
     return `resolving ${done}/${ISSUE_COUNT}`;
   });
-  const statusColor = useTransform(t, (v) => (local(v) >= RESOLVE_END + 200 ? "#fbb38a" : "#a08f83"));
+  const statusColor = useTransform(t, (v) => (local(v) >= RESOLVE_END + 200 ? "var(--scene-terminal-success)" : "var(--scene-terminal-muted)"));
 
   return (
-    <div className="mx-auto flex h-12 w-full max-w-xl items-center gap-3 rounded-2xl bg-[#1f1611] px-5 font-mono text-sm text-white shadow-[0_12px_32px_-12px_rgba(31,22,17,0.45)]">
-      <span className="text-[#a08f83]">$</span>
+    <div className="mx-auto flex h-12 w-full max-w-xl items-center gap-3 rounded-2xl border border-scene-terminal-border bg-scene-terminal px-5 font-mono text-sm text-scene-terminal-text shadow-[0_12px_32px_-12px_var(--scene-terminal-shadow)]">
+      <span className="text-scene-terminal-muted">$</span>
       <span className="flex min-w-0 flex-1 items-center">
         <motion.span className="truncate">{typed}</motion.span>
-        <span className="caret-blink ml-0.5 inline-block h-4 w-2 bg-white/90" aria-hidden />
+        <span className="caret-blink ml-0.5 inline-block h-4 w-2 bg-scene-terminal-text/90" aria-hidden />
       </span>
       <motion.span className="shrink-0 text-xs" style={{ color: statusColor }}>
         {status}
@@ -254,21 +247,19 @@ function Hub({ t }: { t: MotionValue<number> }) {
     <g>
       <motion.ellipse cx={0} cy={-HUB.h} rx={190} ry={110} fill="url(#rs-glow)" style={{ opacity: glow }} />
       <IsoBox x={x} y={x} w={s} d={s} h={HUB.h} r={18}>
-        <rect x={x + 8} y={x + 8} width={s - 16} height={s - 16} rx={12} fill="none" stroke="#eee5dd" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+        <rect x={x + 8} y={x + 8} width={s - 16} height={s - 16} rx={12} fill="none" stroke="var(--scene-hairline)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
         {[
           [-bolt, -bolt],
           [bolt, -bolt],
           [-bolt, bolt],
           [bolt, bolt],
         ].map(([bx, by]) => (
-          <circle key={`${bx}${by}`} cx={bx} cy={by} r={2.6} fill="#f6efe9" stroke="#e6cfbf" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+          <circle key={`${bx}${by}`} cx={bx} cy={by} r={2.6} fill="var(--scene-paper-sunken)" stroke="var(--iso-ink)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
         ))}
         <rect x={-48} y={-48} width={96} height={96} rx={12} fill="url(#rs-plate)" />
-        <motion.rect x={-48} y={-48} width={96} height={96} rx={12} fill="#fff" style={{ opacity: shine }} />
-        {/* Brand mark: concentric rings */}
-        <circle cx={0} cy={0} r={28} fill="none" stroke="#fff" strokeWidth={7} />
-        <circle cx={0} cy={0} r={15} fill="none" stroke="#fff" strokeWidth={7} />
-        <circle cx={0} cy={0} r={5} fill="#fff" />
+        <motion.rect x={-48} y={-48} width={96} height={96} rx={12} fill="var(--scene-on-accent)" style={{ opacity: shine }} />
+        {/* Brand mark */}
+        <EmblemMark size={64} fill="var(--scene-on-accent)" />
       </IsoBox>
     </g>
   );
@@ -296,8 +287,8 @@ function IssueTile({ tile, t }: { tile: PlacedTile; t: MotionValue<number> }) {
       {tile.stacked ? <IsoBox x={x - 7} y={y + 5} w={TILE} d={TILE} h={TILE_H} r={7} strokeWidth={1} /> : null}
       <motion.g style={{ y: lift }}>
         <IsoBox x={x} y={y} z={tile.stacked ? TILE_H : 0} w={TILE} d={TILE} h={TILE_H} r={7} strokeWidth={1}>
-          <rect x={x + 4} y={y + 4} width={TILE - 8} height={TILE - 8} rx={4.5} fill="none" stroke="#efe7e0" strokeWidth={1} vectorEffect="non-scaling-stroke" />
-          <motion.rect x={x + 1} y={y + 1} width={TILE - 2} height={TILE - 2} rx={6} fill="#fdf1e9" style={{ opacity: tint }} />
+          <rect x={x + 4} y={y + 4} width={TILE - 8} height={TILE - 8} rx={4.5} fill="none" stroke="var(--scene-hairline)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+          <motion.rect x={x + 1} y={y + 1} width={TILE - 2} height={TILE - 2} rx={6} fill="var(--scene-accent-wash)" style={{ opacity: tint }} />
           <g transform={`translate(${cx} ${cy})`}>
             <motion.g style={{ opacity: broken }}>
               <IssueIcon kind={tile.kind} />
@@ -364,7 +355,7 @@ function CheckIcon() {
   return (
     <g>
       <circle r={10} fill={COLORS.accent} />
-      <path d="M-5 -1L-1.2 3.6L5 -4.4" stroke="#fff" {...iconStroke} strokeWidth={2.2} />
+      <path d="M-5 -1L-1.2 3.6L5 -4.4" stroke="var(--scene-on-accent)" {...iconStroke} strokeWidth={2.2} />
     </g>
   );
 }

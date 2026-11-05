@@ -1,4 +1,6 @@
 @import "../styles/globals.css";
+@import "../styles/scene.css";
+@import "../styles/effects.css";
 
 /* Brand palette layered on top of BoardUI's theme. Overriding the accent ramp
  * re-tints every BoardUI interactive surface (primary button gradient, focus
@@ -20,6 +22,7 @@
   --color-text-primary: #1f1611;
   --color-text-secondary: #5a4c43;
   --color-border-button-default: #ece4dc;
+  --color-background-secondary-default: #f3ede7;
 
   --background: #f8f5f1;
   --surface: #ffffff;
@@ -31,6 +34,9 @@
   --primary-hover: #dd5824;
   --primary-soft: #fdeee5;
   --danger: #e5484d;
+  --field: #efe8e1;
+  --emblem: var(--primary);
+  --hero-glow: rgba(239, 108, 53, 0.14);
 
   /* Manrope everywhere: BoardUI's theme reads --font-inter, Tailwind's base reads --font-sans. */
   --font-inter: var(--font-manrope);
@@ -40,6 +46,34 @@
   --tracking-site: -0.025em;
   --text-body-medium--letter-spacing: var(--tracking-site);
   --text-caption-1-semibold--letter-spacing: var(--tracking-site);
+}
+
+/* Dark brand palette: warm charcoal grounds under the same orange accent.
+ * `html.dark` outranks the `:root` brand overrides above and BoardUI's own
+ * `.dark` block, so the BoardUI tokens we re-tint follow the theme too. */
+html.dark {
+  --color-background-full: #14100d;
+  --color-text-primary: #f5ede6;
+  --color-text-secondary: #b3a397;
+  --color-border-button-default: #2e2520;
+  --color-border-button-hover: #3d322b;
+  --color-background-primary-default: #1f1915;
+  --color-background-primary-hover: #29211c;
+  --color-background-primary-active: #1f1915;
+  --color-background-secondary-default: #1a1512;
+
+  --background: #14100d;
+  --surface: #1b1612;
+  --foreground: #f5ede6;
+  --muted: #b3a397;
+  --subtle: #8a7a6e;
+  --border: #2e2520;
+  --primary: #ef6c35;
+  --primary-hover: #f68d5c;
+  --primary-soft: #3a2116;
+  --danger: #f2555a;
+  --field: #241d18;
+  --hero-glow: rgba(239, 108, 53, 0.2);
 }
 
 body {
@@ -57,9 +91,18 @@ body {
   --color-primary-hover: var(--primary-hover);
   --color-primary-soft: var(--primary-soft);
   --color-danger: var(--danger);
+  --color-field: var(--field);
   --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-serif);
   --font-mono: var(--font-geist-mono);
+}
+
+/* Set for two frames while the theme flips so hover/color transitions don't
+ * smear the swap. */
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
 }
 
 @keyframes caret-blink {

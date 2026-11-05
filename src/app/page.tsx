@@ -3,23 +3,22 @@ import {
   RiCheckLine,
 } from "@remixicon/react";
 import { ButtonLink } from "@/components/base/buttons/button";
+import { Emblem } from "@/components/brand/Emblem";
+import { StarBorder } from "@/components/effects/StarBorder";
 import { ClientOnly } from "@/components/providers/ClientOnly";
+import { ThemeToggle } from "@/components/providers/theme";
 import { ProcessingMachine } from "@/components/machine/ProcessingMachine";
 import { WorkspaceScene } from "@/components/machine/WorkspaceScene";
 import { ResolveScene } from "@/components/machine/ResolveScene";
 import { Footer } from "@/components/sections/Footer";
-import { UseCases } from "@/components/sections/UseCases";
+import { Services } from "@/components/sections/Services";
 
 const NAV = ["How it Works", "Use Cases", "Pricing", "Customers"];
 
 function Logo() {
   return (
     <a href="#" className="flex items-center gap-2 text-foreground">
-      <svg viewBox="0 0 32 32" className="size-7" aria-hidden>
-        <circle cx="16" cy="16" r="14" fill="none" stroke="var(--primary)" strokeWidth="3" />
-        <circle cx="16" cy="16" r="8" fill="none" stroke="var(--primary)" strokeWidth="3" />
-        <circle cx="16" cy="16" r="3" fill="var(--primary)" />
-      </svg>
+      <Emblem className="w-6" />
       <span className="font-serif text-[1.65rem] leading-none tracking-tight">Docflow</span>
     </a>
   );
@@ -39,9 +38,14 @@ export default function Home() {
               </a>
             ))}
           </nav>
-          <ButtonLink href="#" variant="secondary">
-            Book a Free Call
-          </ButtonLink>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <StarBorder>
+              <ButtonLink href="#" variant="secondary">
+                Book a Free Call
+              </ButtonLink>
+            </StarBorder>
+          </div>
         </div>
       </header>
 
@@ -50,7 +54,7 @@ export default function Home() {
         <section className="relative flex flex-col items-center overflow-hidden px-4 pt-20 pb-10 sm:pt-24">
           <div
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-[58%] h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(239,108,53,0.14),transparent)]"
+            className="pointer-events-none absolute left-1/2 top-[58%] h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,var(--hero-glow),transparent)]"
           />
 
           <div className="relative max-w-4xl text-center">
@@ -62,12 +66,16 @@ export default function Home() {
               with expert help and enterprise-grade AI.
             </p>
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-              <ButtonLink href="#" trailingIcon={RiArrowRightLine}>
-                Book a Free Discovery
-              </ButtonLink>
-              <ButtonLink href="#" variant="secondary">
-                Case Studies
-              </ButtonLink>
+              <StarBorder>
+                <ButtonLink href="#" trailingIcon={RiArrowRightLine}>
+                  Book a Free Discovery
+                </ButtonLink>
+              </StarBorder>
+              <StarBorder>
+                <ButtonLink href="#" variant="secondary">
+                  Case Studies
+                </ButtonLink>
+              </StarBorder>
             </div>
           </div>
 
@@ -76,7 +84,9 @@ export default function Home() {
           </ClientOnly>
         </section>
 
-        <UseCases />
+        <Services />
+
+        {/* Use Cases section hidden for now; re-enable with <UseCases /> */}
 
         {/* Self-healing workflows */}
         <section className="relative border-t border-border px-4 py-24">
@@ -99,9 +109,11 @@ export default function Home() {
           </ClientOnly>
 
           <div className="mt-12 flex justify-center">
-            <ButtonLink href="#" variant="secondary" trailingIcon={RiArrowRightLine}>
-              See how it works
-            </ButtonLink>
+            <StarBorder>
+              <ButtonLink href="#" variant="secondary" trailingIcon={RiArrowRightLine}>
+                See how it works
+              </ButtonLink>
+            </StarBorder>
           </div>
         </section>
 
@@ -131,9 +143,11 @@ export default function Home() {
                 ))}
               </ul>
               <div className="mt-10">
-                <ButtonLink href="#" trailingIcon={RiArrowRightLine}>
-                  Explore the workspace
-                </ButtonLink>
+                <StarBorder>
+                  <ButtonLink href="#" trailingIcon={RiArrowRightLine}>
+                    Explore the workspace
+                  </ButtonLink>
+                </StarBorder>
               </div>
             </div>
             <ClientOnly fallback={<div className="aspect-[720/500] w-full" />}>

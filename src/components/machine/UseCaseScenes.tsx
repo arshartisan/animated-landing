@@ -8,30 +8,23 @@ import {
   useTransform,
   type MotionValue,
 } from "motion/react";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { S, project, topPlane, wallY, type Pt } from "./iso";
 import { Cylinder, IsoBox } from "./primitives";
 
 // ── Shared ───────────────────────────────────────────────────────────
-const INK = "#1f1611";
-const ACCENT = "var(--primary)";
-const ACCENT_SOFT = "#fdd3bd";
-const LINE = "#e8c2a8";
+// Every color is a theme token (styles/scene.css), so the scenes follow light/dark.
+// Brand marks (Slack, Gmail) keep their own colors in both themes.
+const INK = "var(--scene-ink)";
+const ACCENT = "var(--scene-accent)";
+const ACCENT_SOFT = "var(--scene-accent-soft)";
+const LINE = "var(--scene-accent-line)";
 
 const NAVY_BOX = {
-  top: INK,
-  left: ["#33261e", "#2d211a"] as [string, string],
-  right: ["#1a120d", "#2d211a"] as [string, string],
+  top: "var(--scene-solid)",
+  left: ["var(--scene-solid-left)", "var(--scene-solid-mid)"] as [string, string],
+  right: ["var(--scene-solid-right)", "var(--scene-solid-mid)"] as [string, string],
 };
-
-const ISO_VARS = {
-  "--iso-ink": "#e3b598",
-  "--iso-top": "#ffffff",
-  "--iso-wall-l1": "#fbf6f1",
-  "--iso-wall-l2": "#f4e7dd",
-  "--iso-wall-r1": "#f0dccd",
-  "--iso-wall-r2": "#f8efe8",
-} as CSSProperties;
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const ease = (v: number) => (v < 0.5 ? 4 * v * v * v : 1 - Math.pow(-2 * v + 2, 3) / 2);
@@ -65,7 +58,7 @@ function useClock(still: number) {
 
 function Scene({ viewBox, label, children }: { viewBox: string; label: string; children: ReactNode }) {
   return (
-    <svg viewBox={viewBox} className="h-full w-full" role="img" aria-label={label} style={ISO_VARS}>
+    <svg viewBox={viewBox} className="scene-usecase h-full w-full" role="img" aria-label={label}>
       {children}
     </svg>
   );
@@ -150,7 +143,7 @@ export function DocsScene() {
 
       <Panel x={-90} y={-50} w={122} h={94} t={6}>
         <rect x={-82} y={70} width={56} height={15} rx={7.5} fill={ACCENT} />
-        <WallText u={-54} v={77.5} size={7.5} fill="#fff">
+        <WallText u={-54} v={77.5} size={7.5} fill="var(--scene-on-accent)">
           Contracts
         </WallText>
       </Panel>
@@ -162,7 +155,7 @@ export function DocsScene() {
 
       <Panel x={-62} y={26} w={128} h={80} t={6}>
         <rect x={4} y={44} width={58} height={16} rx={8} fill={ACCENT} />
-        <WallText u={33} v={52} size={7.5} fill="#fff">
+        <WallText u={33} v={52} size={7.5} fill="var(--scene-on-accent)">
           Proposals
         </WallText>
       </Panel>
@@ -281,8 +274,8 @@ export function MailScene() {
 
       {/* Notification badge */}
       <motion.g style={{ y: badge }}>
-        <circle cx={GMAIL.top[0] + 4} cy={GMAIL.top[1] - 34} r={8.5} fill="#e5484d" stroke="#fff" strokeWidth={2} />
-        <text x={GMAIL.top[0] + 4} y={GMAIL.top[1] - 34} textAnchor="middle" dominantBaseline="central" fontSize={9} fontWeight={700} fill="#fff">
+        <circle cx={GMAIL.top[0] + 4} cy={GMAIL.top[1] - 34} r={8.5} fill="var(--danger)" stroke="var(--scene-paper)" strokeWidth={2} />
+        <text x={GMAIL.top[0] + 4} y={GMAIL.top[1] - 34} textAnchor="middle" dominantBaseline="central" fontSize={9} fontWeight={700} fill="var(--scene-on-accent)">
           2
         </text>
       </motion.g>
@@ -373,7 +366,7 @@ export function CrmScene() {
       </Panel>
 
       <Panel {...DONUT}>
-        <circle cx={dc.u} cy={dc.v} r={22} fill="none" stroke="#f3e5da" strokeWidth={10} />
+        <circle cx={dc.u} cy={dc.v} r={22} fill="none" stroke="var(--scene-accent-faint)" strokeWidth={10} />
         <motion.circle
           cx={dc.u}
           cy={dc.v}
@@ -388,7 +381,7 @@ export function CrmScene() {
 
       {/* Database stack */}
       {[0, 1, 2].map((i) => (
-        <Cylinder key={i} x={DB.x} y={DB.y} z={i * 17} r={30} h={15} side="#efe2d7" stroke="#e3b598" />
+        <Cylinder key={i} x={DB.x} y={DB.y} z={i * 17} r={30} h={15} side="var(--scene-paper-recess)" stroke="var(--iso-ink)" />
       ))}
       <IsoBox x={DB.x - 24} y={DB.y - 24} z={51} w={48} d={48} h={12} r={12} {...NAVY_BOX} />
 
@@ -470,7 +463,7 @@ function ApprovalTile({ tile, t }: { tile: (typeof AP_TILES)[number]; t: MotionV
   const y = tile.y - AP_TILE / 2;
   return (
     <IsoBox x={x} y={y} w={AP_TILE} d={AP_TILE} h={8} r={10}>
-      <motion.rect x={x} y={y} width={AP_TILE} height={AP_TILE} rx={10} fill={tile.last ? INK : "#f48a55"} style={{ opacity: lit }} />
+      <motion.rect x={x} y={y} width={AP_TILE} height={AP_TILE} rx={10} fill={tile.last ? INK : "var(--scene-accent-top)"} style={{ opacity: lit }} />
     </IsoBox>
   );
 }
@@ -536,7 +529,7 @@ export function HrScene() {
 
       {/* Laptop screen */}
       <Panel {...SCREEN}>
-        <rect x={SCREEN.x + 10} y={SCREEN.z + 10} width={SCREEN.w - 20} height={SCREEN.h - 20} rx={6} fill="#fff" stroke="#e3b598" strokeWidth={1} {...nss} />
+        <rect x={SCREEN.x + 10} y={SCREEN.z + 10} width={SCREEN.w - 20} height={SCREEN.h - 20} rx={6} fill="var(--scene-paper)" stroke="var(--scene-stroke-warm)" strokeWidth={1} {...nss} />
         <g transform={`translate(${fu} ${fv}) scale(1 -1)`}>
           <motion.text x={0} y={0} textAnchor="middle" dominantBaseline="central" fontSize={26} fontWeight={600} fill={INK}>
             {typed}
@@ -546,8 +539,8 @@ export function HrScene() {
 
       {/* Laptop base */}
       <IsoBox {...LAPTOP} h={8} r={14}>
-        <rect x={LAPTOP.x + 12} y={LAPTOP.y + 10} width={LAPTOP.w - 24} height={62} rx={6} fill="#fdf1e9" stroke="#f0d3c0" strokeWidth={1} {...nss} />
-        <rect x={LAPTOP.x + LAPTOP.w / 2 - 34} y={LAPTOP.y + 88} width={68} height={44} rx={6} fill={ACCENT_SOFT} stroke="#e3b598" strokeWidth={1} {...nss} />
+        <rect x={LAPTOP.x + 12} y={LAPTOP.y + 10} width={LAPTOP.w - 24} height={62} rx={6} fill="var(--scene-accent-wash)" stroke="var(--scene-accent-line)" strokeWidth={1} {...nss} />
+        <rect x={LAPTOP.x + LAPTOP.w / 2 - 34} y={LAPTOP.y + 88} width={68} height={44} rx={6} fill={ACCENT_SOFT} stroke="var(--scene-stroke-warm)" strokeWidth={1} {...nss} />
       </IsoBox>
 
       <FloatCard c={CHECKLIST} t={t} phase={0.8}>
@@ -592,10 +585,10 @@ function ChecklistRow({ i, c, t }: { i: number; c: ReturnType<typeof card>; t: M
   const u = c.x + 9;
   return (
     <g>
-      <rect x={u} y={v - 5} width={10} height={10} rx={2.5} fill="#fff" stroke="#e3b598" strokeWidth={1} {...nss} />
+      <rect x={u} y={v - 5} width={10} height={10} rx={2.5} fill="var(--scene-paper)" stroke="var(--scene-stroke-warm)" strokeWidth={1} {...nss} />
       <motion.g style={{ opacity: done }}>
         <rect x={u} y={v - 5} width={10} height={10} rx={2.5} fill={ACCENT} />
-        <path d={`M${u + 2.5} ${v}L${u + 4.5} ${v - 2.5}L${u + 8} ${v + 2.5}`} fill="none" stroke="#fff" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" {...nss} />
+        <path d={`M${u + 2.5} ${v}L${u + 4.5} ${v - 2.5}L${u + 8} ${v + 2.5}`} fill="none" stroke="var(--scene-on-accent)" strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" {...nss} />
       </motion.g>
       <rect x={u + 15} y={v - 2.5} width={c.w - 32} height={5} rx={2.5} fill={ACCENT_SOFT} />
     </g>

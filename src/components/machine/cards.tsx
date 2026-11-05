@@ -91,7 +91,7 @@ export function ApprovedDoc({ x, y, w, d, z = 0 }: CardProps) {
       <path
         d={`M${bx + 3.5} ${by + 5}l2.4 2.2 4-4.6`}
         fill="none"
-        stroke="#fff"
+        stroke="var(--scene-on-accent)"
         strokeWidth={1.3}
         strokeLinecap="round"
         strokeLinejoin="round"

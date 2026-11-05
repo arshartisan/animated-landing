@@ -3,6 +3,9 @@
 import { RiArrowRightLine } from "@remixicon/react";
 import { motion, useMotionValue, useReducedMotion, useSpring } from "motion/react";
 import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from "react";
+import { Emblem } from "@/components/brand/Emblem";
+import { HubScene } from "@/components/machine/HubScene";
+import { ClientOnly } from "@/components/providers/ClientOnly";
 
 const MENU = ["How it Works", "Use Cases", "Pricing", "Customers", "Blog"];
 const SOCIALS = ["LinkedIn", "X (Twitter)", "YouTube", "GitHub", "Product Hunt"];
@@ -79,7 +82,7 @@ function Newsletter() {
   return (
     <Column title="Newsletter">
       <p className="text-lg text-foreground">Subscribe to get updates on new features and automation insights</p>
-      <form onSubmit={onSubmit} className="mt-4 flex items-center rounded-full bg-[#efe8e1] py-1.5 ps-5 pe-1.5">
+      <form onSubmit={onSubmit} className="mt-4 flex items-center rounded-full bg-field py-1.5 ps-5 pe-1.5">
         <label htmlFor="footer-email" className="sr-only">
           Email address
         </label>
@@ -94,7 +97,7 @@ function Newsletter() {
         <button
           type="submit"
           disabled={sent}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-white hover:text-primary disabled:text-primary"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface hover:text-primary disabled:text-primary"
         >
           {sent ? "Subscribed" : "Subscribe"}
           <RiArrowRightLine className="size-4" aria-hidden />
@@ -160,19 +163,24 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Brand mark */}
-      <div className="flex justify-center py-24 md:py-36">
-        <svg viewBox="0 0 32 32" className="size-36 md:size-48" role="img" aria-label="Docflow">
-          <circle cx="16" cy="16" r="13.5" fill="none" stroke="var(--foreground)" strokeWidth="3.4" />
-          <circle cx="16" cy="16" r="7.5" fill="none" stroke="var(--foreground)" strokeWidth="3.4" />
-          <circle cx="16" cy="16" r="2.8" fill="var(--primary)" />
-        </svg>
+      {/* Animated hub illustration */}
+      <div className="mx-auto w-full max-w-5xl py-12 md:py-16">
+        <ClientOnly fallback={<div className="aspect-[940/470] w-full" />}>
+          <HubScene className="aspect-[940/470] w-full" />
+        </ClientOnly>
       </div>
 
       <div className="grid gap-3 text-sm text-foreground sm:grid-cols-2 md:grid-cols-4">
         {LEGAL.map(({ label, href }, i) => (
           <div key={label} className={i === LEGAL.length - 1 ? "md:text-end" : ""}>
-            {href ? <ScrambleLink label={label} href={href} /> : <span>{label}</span>}
+            {href ? (
+              <ScrambleLink label={label} href={href} />
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                <Emblem className="w-3.5" />
+                {label}
+              </span>
+            )}
           </div>
         ))}
       </div>
