@@ -1,365 +1,313 @@
 "use client";
 
 import { motion, useTransform, type MotionValue } from "motion/react";
+import { useId } from "react";
 import { cx } from "@/utils/cx";
-import { project, topPlane, wallX, wallY, type Pt } from "./iso";
+import { project, topPlane, wallX, wallY } from "./iso";
 import { IsoBox } from "./primitives";
-import {
-  ACCENT,
-  Bob,
-  INK,
-  Led,
-  ON_ACCENT,
-  ORANGE,
-  PAD_H,
-  PAPER,
-  Pad,
-  RECESS,
-  RobotArm,
-  SERVICE_VIEWBOX,
-  SHADED,
-  along,
-  clamp01,
-  ease,
-  lerp,
-  mod,
-  nss,
-  useSceneClock,
-  useValue,
-  type ArmPose,
-} from "./kit";
+import { ACCENT, Bob, FILL, FILL_STRONG, INK, ON_ACCENT, PAPER, SERVICE_VIEWBOX, SOLID, mod, nss, useSceneClock } from "./kit";
+import { Extrude, SpinGear } from "./serviceKit";
 
 // ── Layout (world units) ─────────────────────────────────────────────
-const SERVER_PAD = { x: -400, y: -70, w: 150, d: 100 };
-const STACK_PAD = { x: -80, y: -380, w: 150, d: 140 };
-const CHART_PAD = { x: -90, y: 240, w: 150, d: 110 };
-const DB_PAD = { x: 300, y: 40, w: 130, d: 130 };
+const BASE = { x: -220, y: -200, w: 440, d: 400, h: 12 };
+const TOP = BASE.h;
+const LETTER_Y = 140; // front face of the letters
+const LETTER_DEPTH = 30;
 
-const ROUTES: { pts: Pt[]; out?: boolean }[] = [
-  { pts: [[-250, -20], [-190, -20], [-190, -70], [-130, -70]] },
-  { pts: [[-15, 240], [-15, 190], [-70, 190], [-70, 130]] },
-  { pts: [[-5, -240], [-5, -190], [60, -190], [60, -130]], out: true },
-  { pts: [[300, 110], [200, 110], [200, 90], [130, 90]], out: true },
+// "A" and "I" drawn in wall coords (u = world x, v = height, v up)
+const A_PATH =
+  "M0 0L32 0L39 20L81 20L88 0L120 0L76 125L44 125Z" + "M48 45L72 45L60 79Z";
+const I_PATH = "M0 0L32 0L32 125L0 125Z";
+const LETTERS = [
+  { d: A_PATH, u: -40 },
+  { d: I_PATH, u: 96 },
 ];
 
-// Neural lattice inside the engine
-const COLS: Pt[] = [
-  [-40, -40],
-  [35, -40],
-  [-40, 35],
-  [35, 35],
-];
-const LEVELS = [80, 135, 190];
-type Node3 = { x: number; y: number; z: number; key: string };
-const NODES: Node3[] = COLS.flatMap(([x, y]) => LEVELS.map((z) => ({ x, y, z, key: `${x},${y},${z}` }))).sort(
-  (a, b) => a.x + a.y - (b.x + b.y) || a.z - b.z,
-);
-const EDGES: [Node3, Node3][] = [];
-for (const a of NODES)
-  for (const b of NODES) {
-    if (a.key >= b.key) continue;
-    const same = [a.x === b.x, a.y === b.y, a.z === b.z].filter(Boolean).length;
-    const adjacentLevel = a.z === b.z || Math.abs(LEVELS.indexOf(a.z) - LEVELS.indexOf(b.z)) === 1;
-    if (same === 2 && adjacentLevel) EDGES.push([a, b]);
-  }
-
-// Robot arm
-const ARM_STEP = 2200;
-const ARM_MOVE = 900;
-const ARM_STOPS: Node3[] = [
-  [35, -40, 135],
-  [35, 35, 80],
-  [35, -40, 80],
-  [35, 35, 135],
-].map(([x, y, z]) => NODES.find((n) => n.x === x && n.y === y && n.z === z)!);
-const ROBOT = { x: 160, y: -120 }; // base plate corner
-const GRIP_OFFSET: Pt = [22, -5];
-function armState(v: number) {
-  const n = Math.floor(v / ARM_STEP);
-  const f = v - n * ARM_STEP;
-  const from = ARM_STOPS[mod(n, ARM_STOPS.length)];
-  const to = ARM_STOPS[mod(n + 1, ARM_STOPS.length)];
-  const e = f < ARM_MOVE ? ease(f / ARM_MOVE) : 1;
-  const grip = clamp01((f - ARM_MOVE - 60) / 180) * (1 - clamp01((f - (ARM_STEP - 260)) / 200));
-  return { from, to, e, grip, held: f >= ARM_MOVE ? to.key : null };
-}
-
-// ── Scene ────────────────────────────────────────────────────────────
 export function AiScene({ className }: { className?: string }) {
-  const { ref, t } = useSceneClock(ARM_MOVE + 600);
-
+  const { ref, t } = useSceneClock(1800);
   return (
     <svg
       ref={ref}
       viewBox={SERVICE_VIEWBOX}
-      className={cx("scene-machine", className)}
+      className={cx("scene-service", className)}
       role="img"
-      aria-label="An AI engine with a neural network core, fed by servers, data stores and analytics, tended by a robotic arm"
+      aria-label="A robotic hand holding a circuit brain above a raised AI logo, with a bot face, spinning gears and a live voice waveform"
     >
-      {ROUTES.map((r, i) => (
-        <Route key={i} route={r} i={i} t={t} />
-      ))}
+      <IsoBox {...BASE} r={18} />
+      <g transform={topPlane(TOP)}>
+        <rect x={BASE.x + 14} y={BASE.y + 14} width={BASE.w - 28} height={BASE.d - 28} rx={10} fill="none" stroke={INK} strokeWidth={0.8} opacity={0.35} strokeDasharray="4 5" {...nss} />
+      </g>
+      <HandShadow t={t} />
 
-      <Servers t={t} />
-      <Floater x={-260} y={-150} z={110} t={t} phase={0} accent />
-      <Stack t={t} />
-      <Floater x={-40} y={-260} z={170} t={t} phase={1.4} />
-      <Floater x={-250} y={170} z={50} t={t} phase={2.2} />
-
-      <Engine t={t} />
-      <Robot t={t} />
-
-      <Chart t={t} />
-      <Database t={t} />
-      <Floater x={260} y={230} z={40} t={t} phase={0.7} accent />
+      <BotHead t={t} />
+      <SpinGear plane={wallY} from={-58} to={-40} cx={120} cy={152} r={46} teeth={10} hole={15} t={t} speed={0.0009} fill={PAPER} stroke={INK} />
+      <Hand t={t} />
+      <Radar t={t} />
+      <Letters t={t} />
+      <SpinGear plane={wallY} from={22} to={40} cx={182} cy={74} r={58} teeth={11} hole={20} t={t} speed={-0.00075} fill={FILL_STRONG} stroke={INK} />
+      <Waveform t={t} />
     </svg>
   );
 }
 
-// ── Ground traces with travelling packets ────────────────────────────
-function Route({ route, i, t }: { route: (typeof ROUTES)[number]; i: number; t: MotionValue<number> }) {
-  const k = useTransform(t, (v) => mod(v / 2600 + i * 0.27, 1));
-  const pos = useTransform(k, (p) => along(route.pts, route.out ? 1 - p : p));
-  const x = useTransform(pos, (p) => p[0] - 4.5);
-  const y = useTransform(pos, (p) => p[1] - 4.5);
-  const opacity = useTransform(k, (p) => clamp01(p / 0.12) * clamp01((1 - p) / 0.12));
-  const mid = along(route.pts, 0.5);
-  const d = route.pts.map((p, j) => `${j ? "L" : "M"}${p[0]} ${p[1]}`).join("");
-  return (
-    <g transform={topPlane(0)}>
-      <path d={d} fill="none" stroke={INK} strokeWidth={1.2} strokeLinejoin="round" {...nss} />
-      <rect x={mid[0] - 4} y={mid[1] - 4} width={8} height={8} fill={ACCENT} stroke={INK} strokeWidth={1} {...nss} />
-      <motion.rect x={x} y={y} width={9} height={9} fill={ACCENT} stroke={INK} strokeWidth={1} style={{ opacity }} {...nss} />
-    </g>
-  );
-}
-
-// ── Server racks (top left) ──────────────────────────────────────────
-const RACK = { y: -55, w: 40, d: 60, h: 100 };
-
-function Servers({ t }: { t: MotionValue<number> }) {
+// ── Raised AI letters with a sheen ───────────────────────────────────
+function Letters({ t }: { t: MotionValue<number> }) {
+  const id = useId().replace(/:/g, "");
+  const sheen = useTransform(t, (v) => -120 + mod(v / 3400, 1) * 520);
   return (
     <g>
-      <Pad {...SERVER_PAD} />
-      {[-388, -342, -296].map((x, i) => (
-        <g key={x}>
-          <IsoBox x={x} y={RACK.y} z={PAD_H} w={RACK.w} d={RACK.d} h={RACK.h} r={4} />
-          <g transform={wallY(RACK.y + RACK.d)}>
-            {[0, 1, 2].map((b) => {
-              const v = PAD_H + 12 + b * 28;
-              return (
-                <g key={b}>
-                  <rect x={x + 5} y={v} width={30} height={20} rx={2} fill={RECESS} stroke={INK} strokeWidth={1} {...nss} />
-                  <line x1={x + 10} x2={x + 21} y1={v + 10} y2={v + 10} stroke={INK} strokeWidth={1.4} strokeLinecap="round" {...nss} />
-                  <Led cx={x + 28} cy={v + 10} t={t} delay={(i * 3 + b) * 370} />
-                </g>
-              );
-            })}
-          </g>
-        </g>
+      <defs>
+        <clipPath id={`ai${id}`} clipPathUnits="userSpaceOnUse">
+          {LETTERS.map((l) => (
+            <path key={l.u} d={l.d} transform={`translate(${l.u} ${TOP})`} clipRule="evenodd" />
+          ))}
+        </clipPath>
+      </defs>
+      {LETTERS.map((l) => (
+        <Extrude
+          key={l.u}
+          plane={wallY}
+          from={LETTER_Y - LETTER_DEPTH}
+          to={LETTER_Y}
+          shape={(fill) => <path d={l.d} transform={`translate(${l.u} ${TOP})`} fill={fill} fillRule="evenodd" />}
+          face={
+            <path d={l.d} transform={`translate(${l.u} ${TOP})`} fill={ACCENT} fillRule="evenodd" stroke={INK} strokeWidth={1.3} strokeLinejoin="round" {...nss} />
+          }
+        />
       ))}
+      <g transform={wallY(LETTER_Y)} clipPath={`url(#ai${id})`}>
+        <motion.rect x={sheen} y={-60} width={26} height={260} fill={ON_ACCENT} opacity={0.35} transform="skewX(-28)" />
+      </g>
     </g>
   );
 }
 
-// ── Layered stack with hovering blocks (top right) ───────────────────
-const PLATE = { x: -60, y: -355, w: 110, d: 90, h: 10 };
-const BLOCKS: Pt[] = [
-  [-35, -280],
-  [-5, -310],
-  [25, -340],
+// ── Robotic hand cradling a circuit brain ────────────────────────────
+const PALM = { x: -50, y: -70, w: 100, d: 90, z: 190, h: 26 };
+const FINGERS = [-44, -19, 6, 31];
+const SEGMENTS = [
+  { y: 22, d: 28, z: 192 },
+  { y: 54, d: 26, z: 182 },
+  { y: 84, d: 22, z: 170 },
 ];
 
-function Stack({ t }: { t: MotionValue<number> }) {
-  const lift = useTransform(t, (v) => -(3 + 3 * Math.sin(v / 800)));
-  const flow = useTransform(t, (v) => -mod(v / 40, 6));
-  const topZ = PAD_H + 3 * (PLATE.h + 4);
+function HandShadow({ t }: { t: MotionValue<number> }) {
+  const opacity = useTransform(t, (v) => 0.5 + 0.15 * Math.sin(v / 950));
   return (
-    <g>
-      <Pad {...STACK_PAD} />
-      <IsoBox {...PLATE} z={PAD_H} r={6} />
-      <IsoBox {...PLATE} z={PAD_H + PLATE.h + 4} r={6} {...ORANGE} />
-      <motion.g style={{ y: lift }}>
-        <IsoBox {...PLATE} z={PAD_H + 2 * (PLATE.h + 4)} r={6} />
-      </motion.g>
-      {BLOCKS.map(([bx, by], i) => (
-        <WiredBlock key={i} at={[bx, by]} z={topZ} i={i} t={t} flow={flow} />
+    <g transform={topPlane(TOP)}>
+      <motion.ellipse cx={0} cy={-5} rx={80} ry={70} fill={FILL_STRONG} style={{ opacity }} />
+    </g>
+  );
+}
+
+function Hand({ t }: { t: MotionValue<number> }) {
+  const pieces = FINGERS.flatMap((fx, f) => SEGMENTS.map((s, k) => ({ fx, f, k, ...s }))).sort(
+    (a, b) => a.fx + a.y - (b.fx + b.y),
+  );
+  return (
+    <Bob t={t} amp={6} speed={950}>
+      {/* Wrist + cable */}
+      <path
+        d={(() => {
+          const a = project(30, -125, 205);
+          const b = project(60, -210, 260);
+          return `M${a[0]} ${a[1]}C${a[0] + 40} ${a[1] - 10} ${b[0] + 30} ${b[1] + 20} ${b[0]} ${b[1]}`;
+        })()}
+        fill="none"
+        stroke={ACCENT}
+        strokeWidth={4}
+        strokeLinecap="round"
+      />
+      <IsoBox x={-36} y={-135} z={192} w={72} d={68} h={22} r={12} top={FILL_STRONG} />
+      <IsoBox {...PALM} r={16} />
+      {pieces.map((p) => (
+        <Knuckle key={`${p.f}-${p.k}`} t={t} {...p} />
       ))}
-    </g>
-  );
-}
-
-/** Block hovering on a dashed data wire; the wire stretches with the bob so it stays attached. */
-function WiredBlock({ at: [bx, by], z, i, t, flow }: { at: Pt; z: number; i: number; t: MotionValue<number>; flow: MotionValue<number> }) {
-  const GAP = 64;
-  const bob = useTransform(t, (v) => Math.sin(v / 950 + i * 1.1) * 4);
-  const base = project(bx, by, z);
-  const top = useTransform(bob, (b) => base[1] - GAP + b);
-  return (
-    <g>
-      <circle cx={base[0]} cy={base[1]} r={2} fill={INK} />
-      <motion.line x1={base[0]} x2={base[0]} y1={base[1]} y2={top} stroke={INK} strokeWidth={1.1} strokeDasharray="3 3" style={{ strokeDashoffset: flow }} />
-      <motion.g style={{ y: bob }}>
-        <IsoBox x={bx - 10} y={by - 10} z={z + GAP} w={20} d={20} h={20} r={2} {...(i === 1 ? ORANGE : {})} />
-      </motion.g>
-    </g>
-  );
-}
-
-// ── Bar chart (bottom left) ──────────────────────────────────────────
-const BARS = [
-  { x: -75, base: 50, amp: 14 },
-  { x: -30, base: 78, amp: 18 },
-  { x: 15, base: 112, amp: 20, accent: true },
-];
-
-function Chart({ t }: { t: MotionValue<number> }) {
-  return (
-    <g>
-      <Pad {...CHART_PAD} />
-      {BARS.map((bar, i) => (
-        <Bar key={bar.x} bar={bar} i={i} t={t} />
-      ))}
-    </g>
-  );
-}
-
-function Bar({ bar, i, t }: { bar: (typeof BARS)[number]; i: number; t: MotionValue<number> }) {
-  const h = useValue(useTransform(t, (v) => Math.round(bar.base + bar.amp * Math.sin(v / 900 + i * 1.4))));
-  return <IsoBox x={bar.x} y={278} z={PAD_H} w={34} d={36} h={h} r={3} {...(bar.accent ? ORANGE : {})} />;
-}
-
-// ── Database tiers (bottom right) ────────────────────────────────────
-function Database({ t }: { t: MotionValue<number> }) {
-  const tier = { x: 325, y: 65, w: 80, d: 80, h: 26 };
-  return (
-    <g>
-      <Pad {...DB_PAD} />
-      {[0, 1, 2].map((i) => {
-        const z = PAD_H + i * (tier.h + 4);
-        return (
-          <g key={i}>
-            <IsoBox {...tier} z={z} r={10}>
-              {i === 2 ? (
-                <rect x={tier.x + 16} y={tier.y + 16} width={48} height={48} rx={6} fill={ACCENT} stroke={INK} strokeWidth={1.1} {...nss} />
-              ) : null}
-            </IsoBox>
-            <g transform={wallX(tier.x + tier.w)}>
-              <Led cx={tier.y + tier.d - 16} cy={z + tier.h / 2} t={t} delay={-i * 420} period={1260} rect />
-            </g>
-          </g>
-        );
-      })}
-    </g>
-  );
-}
-
-// ── Floating cubes ───────────────────────────────────────────────────
-function Floater({ x, y, z, t, phase, accent }: { x: number; y: number; z: number; t: MotionValue<number>; phase: number; accent?: boolean }) {
-  return (
-    <Bob t={t} phase={phase}>
-      <IsoBox x={x - 13} y={y - 13} z={z} w={26} d={26} h={26} r={2} {...(accent ? ORANGE : {})} />
+      <Brain t={t} />
     </Bob>
   );
 }
 
-// ── Engine: base, open housing, neural core, lid ─────────────────────
-function Engine({ t }: { t: MotionValue<number> }) {
-  const lid = useTransform(t, (v) => -(3 + 3 * Math.sin(v / 1100)));
+function Knuckle({ t, fx, f, k, y, d, z }: { t: MotionValue<number>; fx: number; f: number; k: number; y: number; d: number; z: number }) {
+  const dy = useTransform(t, (v) => Math.max(0, Math.sin(v / 260 - f * 0.9)) * (k + 1) * 2.2);
   return (
-    <g>
-      {/* Base platform with vents and trim */}
-      <IsoBox x={-130} y={-130} w={260} d={260} h={30} r={20} />
-      <g transform={wallY(130)}>
-        {[0, 1, 2, 3, 4].map((k) => (
-          <rect key={k} x={-100 + k * 9} y={8} width={4} height={15} rx={2} fill="var(--scene-solid)" />
-        ))}
-        <rect x={-30} y={5} width={70} height={20} fill={ACCENT} stroke={INK} strokeWidth={1} {...nss} />
-      </g>
-      <g transform={wallX(130)}>
-        {[0, 1, 2, 3, 4].map((k) => (
-          <rect key={k} x={60 + k * 9} y={8} width={4} height={15} rx={2} fill="var(--scene-solid)" />
-        ))}
-        <rect x={-40} y={5} width={70} height={20} fill={ACCENT} stroke={INK} strokeWidth={1} {...nss} />
-      </g>
-      <IsoBox x={-100} y={-100} z={30} w={200} d={200} h={10} r={14} {...ORANGE} top={PAPER} />
-
-      {/* Housing: back walls first */}
-      <IsoBox x={-90} y={-90} z={40} w={168} d={12} h={180} r={3} left={SHADED} />
-      <IsoBox x={-90} y={-78} z={40} w={12} d={156} h={180} r={3} />
-      <g transform={topPlane(40)}>
-        <rect x={-70} y={-70} width={140} height={140} rx={10} fill={RECESS} stroke={INK} strokeWidth={1} {...nss} />
-      </g>
-
-      <Lattice t={t} />
-
-      {/* Front sills and side slabs */}
-      <IsoBox x={-20} y={78} z={40} w={98} d={12} h={24} r={3} />
-      <IsoBox x={78} y={-20} z={40} w={12} d={110} h={24} r={3} />
-      <IsoBox x={-90} y={78} z={40} w={70} d={12} h={180} r={3} />
-      <g transform={wallY(90)}>
-        <rect x={-82} y={62} width={44} height={110} fill={ACCENT} stroke={INK} strokeWidth={1.1} {...nss} />
-      </g>
-      <IsoBox x={78} y={-90} z={40} w={12} d={70} h={180} r={3} />
-      <g transform={wallX(90)}>
-        <rect x={-82} y={62} width={44} height={110} fill={ACCENT} stroke={INK} strokeWidth={1.1} {...nss} />
-      </g>
-
-      {/* Hovering lid */}
-      <motion.g style={{ y: lid }}>
-        <IsoBox x={-98} y={-98} z={220} w={196} d={196} h={22} r={18}>
-          <rect x={-50} y={-50} width={100} height={100} rx={8} fill={ACCENT} stroke={INK} strokeWidth={1.1} {...nss} />
-        </IsoBox>
-      </motion.g>
-    </g>
+    <motion.g style={{ y: dy }}>
+      <IsoBox x={fx} y={y - 4} z={z + 2} w={20} d={6} h={14} r={3} top={FILL_STRONG} />
+      <IsoBox x={fx} y={y} z={z} w={20} d={d} h={18} r={8} />
+    </motion.g>
   );
 }
 
-function Lattice({ t }: { t: MotionValue<number> }) {
+const LOBES: [number, number, number][] = [
+  [-62, 4, 38],
+  [-30, -26, 42],
+  [16, -32, 44],
+  [60, -10, 40],
+  [44, 24, 36],
+  [0, 18, 42],
+  [-44, 30, 32],
+];
+const TRACES = [
+  "M-70 8L-48 -6L-30 -6",
+  "M-40 -36L-22 -20L-2 -20",
+  "M8 -52L8 -30L30 -18",
+  "M30 -48L52 -30L76 -30",
+  "M66 0L44 6L30 -2",
+  "M-22 26L-4 14L14 14",
+  "M30 32L48 24",
+  "M-60 34L-40 22",
+];
+const NODES: [number, number][] = [
+  [-70, 8],
+  [-40, -36],
+  [8, -52],
+  [30, -48],
+  [66, 0],
+  [-22, 26],
+  [30, 32],
+  [-60, 34],
+  [-30, -6],
+  [-2, -20],
+  [30, -18],
+  [76, -30],
+  [14, 14],
+];
+
+function Brain({ t }: { t: MotionValue<number> }) {
+  const [cx0, cy0] = project(0, -25, PALM.z + PALM.h + 46);
   return (
-    <g>
-      {EDGES.map(([a, b]) => {
-        const p = project(a.x, a.y, a.z);
-        const q = project(b.x, b.y, b.z);
-        return <line key={`${a.key}-${b.key}`} x1={p[0]} y1={p[1]} x2={q[0]} y2={q[1]} stroke={INK} strokeWidth={1.1} opacity={0.6} />;
-      })}
-      {NODES.map((n, i) => (
-        <LatticeNode key={n.key} n={n} i={i} t={t} />
+    <g transform={`translate(${cx0} ${cy0})`}>
+      <ellipse cx={0} cy={50} rx={70} ry={20} fill={FILL_STRONG} />
+      {LOBES.map(([x, y, r], i) => (
+        <circle key={`s${i}`} cx={x} cy={y} r={r} fill={INK} stroke={INK} strokeWidth={2.6} />
+      ))}
+      {LOBES.map(([x, y, r], i) => (
+        <circle key={`f${i}`} cx={x} cy={y} r={r} fill={ACCENT} />
+      ))}
+      <path d="M2 -62C-8 -30 18 -10 4 20C-2 34 8 46 14 54" fill="none" stroke={INK} strokeWidth={1.4} strokeLinecap="round" />
+      <path d="M-48 -18C-38 -8 -50 6 -36 14M42 -40C34 -28 50 -18 38 -6" fill="none" stroke={INK} strokeWidth={1.1} strokeLinecap="round" opacity={0.55} />
+      {TRACES.map((d) => (
+        <path key={d} d={d} fill="none" stroke={ON_ACCENT} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      ))}
+      {NODES.map(([x, y], i) => (
+        <Synapse key={i} x={x} y={y} i={i} t={t} />
       ))}
     </g>
   );
 }
 
-function LatticeNode({ n, i, t }: { n: Node3; i: number; t: MotionValue<number> }) {
-  const [x, y] = project(n.x, n.y, n.z);
-  const halo = useTransform(t, (v) => {
-    const s = armState(v);
-    if (s.held === n.key) return 0.55 + 0.25 * s.grip;
-    return 0.1 + 0.3 * (0.5 + 0.5 * Math.sin(v / 420 - (n.z / 55 + i * 0.35)));
-  });
-  const haloR = useTransform(halo, (h) => 11 + h * 9);
+function Synapse({ x, y, i, t }: { x: number; y: number; i: number; t: MotionValue<number> }) {
+  const r = useTransform(t, (v) => 3.2 + 2.2 * Math.max(0, Math.sin(v / 380 - i * 0.8)));
+  return <motion.circle cx={x} cy={y} r={r} fill={ON_ACCENT} stroke={INK} strokeWidth={1} />;
+}
+
+// ── Bot head with a pixel face that blinks ───────────────────────────
+const HEAD = { x: -250, y: 100, w: 120, d: 34, z: 140, h: 86 };
+const PX = 6;
+const EYE_OPEN: [number, number][] = [
+  [0, 0],
+  [1, 1],
+  [2, 0],
+];
+const EYE_SHUT: [number, number][] = [
+  [0, 0],
+  [1, 0],
+  [2, 0],
+];
+const SMILE: [number, number][] = [
+  [0, 2],
+  [1, 1],
+  [2, 0],
+  [3, 0],
+  [4, 0],
+  [5, 0],
+  [6, 1],
+  [7, 2],
+];
+
+function BotHead({ t }: { t: MotionValue<number> }) {
+  const open = useTransform(t, (v) => (mod(v, 3600) < 3420 ? 1 : 0));
+  const shut = useTransform(open, (o) => 1 - o);
+  const face = HEAD.y + HEAD.d;
+  const pixels = (pts: [number, number][], ox: number, oy: number) =>
+    pts.map(([a, b]) => <rect key={`${a}${b}`} x={ox + a * PX} y={oy + b * PX} width={PX - 1} height={PX - 1} fill={ACCENT} />);
+  return (
+    <Bob t={t} phase={1.2} amp={5}>
+      <IsoBox x={HEAD.x + 40} y={HEAD.y + 6} z={HEAD.z - 30} w={40} d={20} h={30} r={6} top={FILL_STRONG} />
+      <IsoBox {...HEAD} r={17} />
+      <g transform={wallY(face)}>
+        <rect x={HEAD.x + 12} y={HEAD.z + 12} width={HEAD.w - 24} height={HEAD.h - 24} rx={14} fill={SOLID} stroke={INK} strokeWidth={1.2} {...nss} />
+        <motion.g style={{ opacity: open }}>
+          {pixels(EYE_OPEN, HEAD.x + 32, HEAD.z + 52)}
+          {pixels(EYE_OPEN, HEAD.x + 70, HEAD.z + 52)}
+        </motion.g>
+        <motion.g style={{ opacity: shut }}>
+          {pixels(EYE_SHUT, HEAD.x + 32, HEAD.z + 55)}
+          {pixels(EYE_SHUT, HEAD.x + 70, HEAD.z + 55)}
+        </motion.g>
+        {pixels(SMILE, HEAD.x + 37, HEAD.z + 24)}
+      </g>
+    </Bob>
+  );
+}
+
+// ── Radar tile with expanding rings ──────────────────────────────────
+const TILE = { x: -205, y: 150, w: 66, d: 12, z: TOP, h: 66 };
+
+function Radar({ t }: { t: MotionValue<number> }) {
+  const c = { u: TILE.x + TILE.w / 2, v: TILE.z + TILE.h / 2 };
+  const id = useId().replace(/:/g, "");
   return (
     <g>
-      <motion.circle cx={x} cy={y} r={haloR} fill={ACCENT} style={{ opacity: halo }} />
-      <circle cx={x} cy={y} r={8.5} fill={ACCENT} stroke={INK} strokeWidth={1.1} />
-      <circle cx={x - 2.6} cy={y - 2.6} r={2.4} fill={ON_ACCENT} opacity={0.75} />
+      <IsoBox {...TILE} r={5} />
+      <g transform={wallY(TILE.y + TILE.d)}>
+        <defs>
+          <clipPath id={`rd${id}`} clipPathUnits="userSpaceOnUse">
+            <rect x={TILE.x + 6} y={TILE.z + 6} width={TILE.w - 12} height={TILE.h - 12} rx={4} />
+          </clipPath>
+        </defs>
+        <rect x={TILE.x + 6} y={TILE.z + 6} width={TILE.w - 12} height={TILE.h - 12} rx={4} fill={PAPER} stroke={INK} strokeWidth={1} {...nss} />
+        <g clipPath={`url(#rd${id})`}>
+          {[0, 1, 2].map((i) => (
+            <Ring key={i} i={i} u={c.u} v={c.v} t={t} />
+          ))}
+        </g>
+        <circle cx={c.u} cy={c.v} r={4} fill={ACCENT} stroke={INK} strokeWidth={1} {...nss} />
+      </g>
     </g>
   );
 }
 
-// ── Robot arm ────────────────────────────────────────────────────────
-function armPose(v: number): ArmPose {
-  const s = armState(v);
-  const a = project(s.from.x, s.from.y, s.from.z);
-  const b = project(s.to.x, s.to.y, s.to.z);
-  const target = lerp(a, b, s.e);
-  return {
-    wrist: [target[0] + GRIP_OFFSET[0], target[1] + GRIP_OFFSET[1] - Math.sin(s.e * Math.PI) * 18],
-    grip: s.grip,
-  };
+function Ring({ i, u, v, t }: { i: number; u: number; v: number; t: MotionValue<number> }) {
+  const k = useTransform(t, (x) => mod(x / 2400 + i / 3, 1));
+  const r = useTransform(k, (p) => 6 + p * 30);
+  const opacity = useTransform(k, (p) => 1 - p);
+  return <motion.circle cx={u} cy={v} r={r} fill="none" stroke={ACCENT} strokeWidth={4} style={{ opacity }} />;
 }
 
-function Robot({ t }: { t: MotionValue<number> }) {
-  const pose = useTransform(t, armPose);
-  return <RobotArm x={ROBOT.x + 30} y={ROBOT.y + 30} pose={pose} />;
+// ── Voice waveform panel along the front-right edge ──────────────────
+const WAVE = { x: 186, y: 20, w: 14, d: 168, z: TOP, h: 46 };
+const BARS = Array.from({ length: 16 }, (_, i) => i);
+
+function Waveform({ t }: { t: MotionValue<number> }) {
+  // wallX coords: u = world y (u grows to screen left), v = height
+  const face = WAVE.x + WAVE.w;
+  return (
+    <g>
+      <IsoBox {...WAVE} r={5} />
+      <g transform={wallX(face)}>
+        <rect x={WAVE.y + 6} y={WAVE.z + 6} width={WAVE.d - 12} height={WAVE.h - 12} rx={6} fill={SOLID} stroke={INK} strokeWidth={1} {...nss} />
+        <path d={`M${WAVE.y + WAVE.d - 16} ${WAVE.z + 16}l0 14l-11 -7z`} fill={ACCENT} />
+        {BARS.map((i) => (
+          <WaveBar key={i} i={i} u={WAVE.y + WAVE.d - 34 - i * 7.6} mid={WAVE.z + WAVE.h / 2} t={t} />
+        ))}
+      </g>
+    </g>
+  );
+}
+
+function WaveBar({ i, u, mid, t }: { i: number; u: number; mid: number; t: MotionValue<number> }) {
+  const h = useTransform(t, (v) => 3 + 12 * Math.abs(Math.sin(v / 210 + i * 0.7) * Math.cos(v / 520 + i * 0.3)));
+  const y = useTransform(h, (x) => mid - x / 2);
+  return <motion.rect x={u - 1.6} y={y} width={3.2} height={h} rx={1.6} fill={i % 3 === 0 ? FILL : ACCENT} />;
 }

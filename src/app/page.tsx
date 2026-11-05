@@ -19,7 +19,7 @@ function Logo() {
   return (
     <a href="#" className="flex items-center gap-2 text-foreground">
       <Emblem className="w-6" />
-      <span className="font-serif text-[1.65rem] leading-none tracking-tight">Docflow</span>
+      <span className="font-serif text-[1.65rem] leading-none tracking-tight">ForoD</span>
     </a>
   );
 }

@@ -10,7 +10,7 @@ import { ClientOnly } from "@/components/providers/ClientOnly";
 const MENU = ["How it Works", "Use Cases", "Pricing", "Customers", "Blog"];
 const SOCIALS = ["LinkedIn", "X (Twitter)", "YouTube", "GitHub", "Product Hunt"];
 const LEGAL = [
-  { label: `©${new Date().getFullYear()} Docflow`, href: undefined },
+  { label: `©${new Date().getFullYear()} ForoD`, href: undefined },
   { label: "Pricing (PDF)", href: "#" },
   { label: "Cookies Policy", href: "#" },
   { label: "Privacy Policy", href: "#" },

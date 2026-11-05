@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { cx } from "@/utils/cx";
 
 const PATHS = [
@@ -7,8 +6,6 @@ const PATHS = [
   "M648.31 158.53V355.16L425 484.09L239.15 591.39L170.06 631.25L0 729.46V532.82L170.06 434.61L239.15 394.75L425 287.46L648.31 158.53Z",
   "M170.06 710.96V868L34.0698 789.51L170.06 710.96Z",
 ];
-const W = 888;
-const H = 1026;
 
 /**
  * Brand emblem, filled with the `--emblem` token (brand orange in both themes).
@@ -31,38 +28,26 @@ export function Emblem({ className, title }: { className?: string; title?: strin
 }
 
 /**
- * The emblem as an SVG fragment for use inside illustrations: centred on
- * (cx, cy), `size` units tall. `rotate` lets a decal on an isometric top
- * plane read upright on screen (-45 for the scenes' top planes).
+ * The rounded ring mark used on the scene plates: two concentric rings and a
+ * dot, centred on (cx, cy). `size` is the outer diameter.
  */
-export function EmblemMark({
+export function RingMark({
   cx = 0,
   cy = 0,
   size,
   fill,
-  rotate = -45,
-  opacity,
-  style,
 }: {
   cx?: number;
   cy?: number;
   size: number;
   fill: string;
-  rotate?: number;
-  opacity?: number;
-  style?: CSSProperties;
 }) {
-  const k = size / H;
+  const k = size / 56; // proportions of the original 56-unit mark
   return (
-    <g
-      transform={`translate(${cx} ${cy}) rotate(${rotate}) scale(${k}) translate(${-W / 2} ${-H / 2})`}
-      fill={fill}
-      opacity={opacity}
-      style={style}
-    >
-      {PATHS.map((d) => (
-        <path key={d} d={d} />
-      ))}
+    <g fill="none" stroke={fill} strokeWidth={6 * k}>
+      <circle cx={cx} cy={cy} r={25 * k} />
+      <circle cx={cx} cy={cy} r={13.5 * k} />
+      <circle cx={cx} cy={cy} r={4.5 * k} fill={fill} stroke="none" />
     </g>
   );
 }

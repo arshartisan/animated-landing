@@ -14,7 +14,7 @@ import { ApprovedDoc, CarCard, SignedDoc } from "./cards";
 import { halfSpaceClip, project, roundedPolygon, topPlane, wallRect, wallX, wallY, type Pt } from "./iso";
 import { CoinStack, Cylinder, INK, IsoBox } from "./primitives";
 import { cx } from "@/utils/cx";
-import { EmblemMark } from "@/components/brand/Emblem";
+import { RingMark } from "@/components/brand/Emblem";
 
 // ── Timing ────────────────────────────────────────────────────────────
 const STEP = 2600; // ms per conveyor step
@@ -187,8 +187,8 @@ function Machine({ t }: { t: MotionValue<number> }) {
           style={{ opacity: plateGlow }}
         />
         <rect x={cx - 40} y={cy - 40} width={80} height={80} rx={13} fill="var(--scene-paper-tint)" stroke={INK} strokeWidth={1.15} vectorEffect="non-scaling-stroke" />
-        {/* Brand mark */}
-        <EmblemMark cx={cx} cy={cy} size={56} fill="var(--iso-accent)" />
+        {/* Brand mark: concentric rings */}
+        <RingMark cx={cx} cy={cy} size={56} fill="var(--iso-accent)" />
         {/* Slot */}
         <rect x={BODY.x + 30} y={BODY.y + BODY.d - 24} width={92} height={7} rx={3.5} fill="var(--scene-paper-recess)" stroke={INK} strokeWidth={1.1} vectorEffect="non-scaling-stroke" />
       </IsoBox>

@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Docflow — Inputs in, approved documents out",
+  title: "ForoD — Inputs in, approved documents out",
   description: "Automate document intake, review, and approvals end to end.",
 };
 

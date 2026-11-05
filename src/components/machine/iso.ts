@@ -120,3 +120,21 @@ export function wallRect(axis: "x" | "y", c: number, u0: number, u1: number, z0:
   const at = (u: number, z: number) => (axis === "y" ? project(u, c, z) : project(c, u, z));
   return toPath([at(u0, z0), at(u1, z0), at(u1, z1), at(u0, z1)]);
 }
+
+/** Plane through the line x = c (z = z0), leaning back toward -x by `deg`.
+ * Local coords: u = world y, v = distance up the slope. Faces +x (screen lower-right). */
+export const tiltWallX = (c: number, deg: number, z0 = 0) => {
+  const a = (deg * Math.PI) / 180;
+  const sn = Math.sin(a);
+  const cs = Math.cos(a);
+  return `matrix(${-S} 0.5 ${-S * sn} ${-(0.5 * sn + cs)} ${c * S} ${c * 0.5 - z0})`;
+};
+
+/** Plane through the line y = c (z = z0), leaning back toward -y by `deg`.
+ * Local coords: u = world x, v = distance up the slope. Faces +y (screen lower-left). */
+export const tiltWallY = (c: number, deg: number, z0 = 0) => {
+  const a = (deg * Math.PI) / 180;
+  const sn = Math.sin(a);
+  const cs = Math.cos(a);
+  return `matrix(${S} 0.5 ${S * sn} ${-(0.5 * sn + cs)} ${-c * S} ${c * 0.5 - z0})`;
+};

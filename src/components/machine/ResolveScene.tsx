@@ -10,7 +10,7 @@ import {
   type MotionValue,
 } from "motion/react";
 import { useRef } from "react";
-import { EmblemMark } from "@/components/brand/Emblem";
+import { RingMark } from "@/components/brand/Emblem";
 import { S, topPlane } from "./iso";
 import { IsoBox } from "./primitives";
 
@@ -24,7 +24,7 @@ const RESOLVE_DUR = 520;
 const RESET_START = 8700;
 const RESET_DUR = 600;
 
-const COMMAND = "docflow resolve --all";
+const COMMAND = "forod resolve --all";
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const local = (t: number) => ((t % CYCLE) + CYCLE) % CYCLE;
@@ -258,8 +258,8 @@ function Hub({ t }: { t: MotionValue<number> }) {
         ))}
         <rect x={-48} y={-48} width={96} height={96} rx={12} fill="url(#rs-plate)" />
         <motion.rect x={-48} y={-48} width={96} height={96} rx={12} fill="var(--scene-on-accent)" style={{ opacity: shine }} />
-        {/* Brand mark */}
-        <EmblemMark size={64} fill="var(--scene-on-accent)" />
+        {/* Brand mark: concentric rings */}
+        <RingMark size={64} fill="var(--scene-on-accent)" />
       </IsoBox>
     </g>
   );

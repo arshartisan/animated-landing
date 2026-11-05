@@ -174,7 +174,8 @@
 }
 
 /* Payment desk: bold outlines on bright paper */
-.scene-payment {
+.scene-payment,
+.scene-service {
   --iso-ink: var(--scene-ink);
   --iso-top: #ffffff;
   --iso-wall-l1: #ffffff;
@@ -186,7 +187,8 @@
 .dark .scene-resolve,
 .dark .scene-usecase,
 .dark .scene-workspace,
-.dark .scene-payment {
+.dark .scene-payment,
+.dark .scene-service {
   --iso-top: #2a221d;
   --iso-wall-l1: #241d18;
   --iso-wall-l2: #1f1915;

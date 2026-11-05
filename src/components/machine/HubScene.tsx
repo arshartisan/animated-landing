@@ -2,7 +2,7 @@
 
 import { motion, useTransform, type MotionValue } from "motion/react";
 import { cx } from "@/utils/cx";
-import { EmblemMark } from "@/components/brand/Emblem";
+import { RingMark } from "@/components/brand/Emblem";
 import { halfSpaceClip, project, topPlane, wallRect, wallX, wallY } from "./iso";
 import { Cylinder, IsoBox } from "./primitives";
 import { ACCENT, ACCENT_SOFT, INK, ON_ACCENT, ORANGE, PAPER, RECESS, SOLID, ease, mod, nss, useSceneClock } from "./kit";
@@ -53,7 +53,7 @@ export function HubScene({ className }: { className?: string }) {
       viewBox="-470 -255 940 470"
       className={cx("scene-machine", className)}
       role="img"
-      aria-label="Docflow hub: blank documents slide in along a track, get validated under glass and leave secured"
+      aria-label="ForoD hub: blank documents slide in along a track, get validated under glass and leave secured"
     >
       <defs>
         <clipPath id="hub-exit-clip">
@@ -174,10 +174,10 @@ function Hub({ t }: { t: MotionValue<number> }) {
       </g>
       <g clipPath="url(#hub-well-clip)">
         <IsoBox x={-40} y={-40} z={core - 40} w={80} d={80} h={40} r={10}>
-          <EmblemMark size={48} fill={ACCENT} />
+          <RingMark size={48} fill={ACCENT} />
           <motion.rect x={-40} y={-40} width={80} height={80} rx={10} fill={ACCENT} style={{ opacity: glow }} />
           <motion.g style={{ opacity: glow }}>
-            <EmblemMark size={48} fill={ON_ACCENT} />
+            <RingMark size={48} fill={ON_ACCENT} />
           </motion.g>
         </IsoBox>
         <g transform={topPlane(HUB_TOP)}>

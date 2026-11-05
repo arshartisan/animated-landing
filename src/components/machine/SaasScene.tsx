@@ -1,416 +1,372 @@
 "use client";
 
 import { motion, useTransform, type MotionValue } from "motion/react";
+import { useId } from "react";
 import { cx } from "@/utils/cx";
-import { project, topPlane, wallX, wallY, type Pt } from "./iso";
+import { project, topPlane, wallX, wallY } from "./iso";
 import { Cylinder, IsoBox } from "./primitives";
 import {
   ACCENT,
+  ACCENT_SOFT,
   Bob,
-  Cube,
   FILL,
   FILL_STRONG,
   INK,
   Led,
+  ON_ACCENT,
   ORANGE,
-  PAD_H,
   PAPER,
-  Pad,
   SERVICE_VIEWBOX,
   SOLID,
-  Window,
-  along,
-  ease,
+  clamp01,
   mod,
   nss,
-  polyPath,
-  span,
-  toWorld,
   useSceneClock,
+  useValue,
 } from "./kit";
+import { Cable, Extrude, SpinGear } from "./serviceKit";
 
-// ── Layout ───────────────────────────────────────────────────────────
-const SHIFT = 40; // whole scene sits a little lower in the frame
-const MON = { x: -140, y: -20, w: 280, h: 160, z: 124, t: 14 };
-const face = MON.y + MON.t;
+const pt = (x: number, y: number, z = 0) => project(x, y, z).map((n) => n.toFixed(1)).join(" ");
 
-/** A window placed by the screen position of its face's bottom-left corner. */
-const placeWin = (sx: number, sy: number, z = 60, w = 110, h = 90, t = 8) => {
-  const [x, yFace] = toWorld(sx, sy, z);
-  return { x, y: yFace - t, z, w, h, t };
-};
-const WIN_L1 = placeWin(-375, -150);
-const WIN_L2 = placeWin(-375, -20);
-const WIN_R1 = placeWin(200, -110);
-const WIN_R2 = placeWin(200, 20);
-
-/** Screen point on a window face edge, at mid height. */
-const port = (w: ReturnType<typeof placeWin>, side: "left" | "right") =>
-  project(side === "right" ? w.x + w.w : w.x, w.y + w.t, w.z + w.h / 2);
-
-const cubicPts = (a: Pt, b: Pt, c: Pt, d: Pt, n = 18): Pt[] =>
-  Array.from({ length: n + 1 }, (_, i) => {
-    const k = i / n;
-    const q = 1 - k;
-    return [
-      q * q * q * a[0] + 3 * q * q * k * b[0] + 3 * q * k * k * c[0] + k * k * k * d[0],
-      q * q * q * a[1] + 3 * q * q * k * b[1] + 3 * q * k * k * c[1] + k * k * k * d[1],
-    ] as Pt;
-  });
-
-const MON_L = project(MON.x, face, MON.z + 85);
-const MON_R = project(MON.x + MON.w, face, MON.z + 70);
-const J_L: Pt = [MON_L[0] - 60, MON_L[1] + 22];
-const J_R: Pt = [MON_R[0] + 55, MON_R[1] + 6];
-const wireTo = (from: Pt, j: Pt): Pt[] =>
-  cubicPts(from, [from[0] + (j[0] - from[0]) * 0.55, from[1]], [j[0] - (j[0] - from[0]) * 0.1, j[1]], j);
-const WIRES: Pt[][] = [
-  [...wireTo(port(WIN_L1, "right"), J_L), MON_L],
-  [...wireTo(port(WIN_L2, "right"), J_L), MON_L],
-  [...wireTo(port(WIN_R1, "left"), J_R), MON_R],
-  [...wireTo(port(WIN_R2, "left"), J_R), MON_R],
-];
-
-// ── Scene ────────────────────────────────────────────────────────────
 export function SaasScene({ className }: { className?: string }) {
-  const { ref, t } = useSceneClock(2400);
+  const { ref, t } = useSceneClock(1600);
   return (
     <svg
       ref={ref}
       viewBox={SERVICE_VIEWBOX}
-      className={cx("scene-machine", className)}
+      className={cx("scene-service", className)}
       role="img"
-      aria-label="A SaaS dashboard on a server stack, synced to the cloud and to app windows, storage and modules"
+      aria-label="A SaaS stack: a monitor streaming code, a secured server tower, stacked servers, live metrics, a billing card, a phone, a cloud upload and a spinning gear"
     >
-      <g transform={`translate(0 ${SHIFT})`}>
-        <GroundWires t={t} />
-
-        <Bob t={t} phase={0} amp={4}>
-          <TilesWindow t={t} />
-        </Bob>
-        <Bob t={t} phase={1.6} amp={4}>
-          <ListWindow t={t} />
-        </Bob>
-        <Bob t={t} phase={0.8} amp={4}>
-          <VideoWindow t={t} />
-        </Bob>
-        <Bob t={t} phase={2.4} amp={4}>
-          <ImageWindow />
-        </Bob>
-
-        {WIRES.map((w, i) => (
-          <Wire key={i} pts={w} t={t} i={i} />
-        ))}
-        {[port(WIN_L1, "right"), port(WIN_L2, "right"), port(WIN_R1, "left"), port(WIN_R2, "left"), J_L, J_R].map((p, i) => (
-          <circle key={i} cx={p[0]} cy={p[1]} r={5} fill={PAPER} stroke={ACCENT} strokeWidth={2} />
-        ))}
-
-        <ServerStack t={t} />
-        <Monitor t={t} />
-        <Cloud t={t} />
-
-        <Modules />
-        <Storage t={t} />
-      </g>
+      <Holes />
+      <Monitor t={t} />
+      <Cup t={t} />
+      <ServerStack t={t} />
+      <CheckTile t={t} />
+      <Cable d={`M${pt(-200, 85, 4)}C${pt(-150, 120)} ${pt(-140, 160)} ${pt(-80, 195)}`} t={t} length={260} />
+      <Cable d={`M${pt(40, 70, 4)}C${pt(70, 30)} ${pt(110, -40)} ${pt(60, -100)}`} t={t} phase={0.5} length={240} />
+      <Bars t={t} />
+      <Tower t={t} />
+      <BillingCard t={t} />
+      <Phone t={t} />
+      <SpinGear plane={wallY} from={-44} to={-24} cx={247} cy={42} r={52} teeth={9} hole={18} t={t} speed={0.0011} fill={PAPER} stroke={INK} />
+      <Upload t={t} />
     </svg>
   );
 }
 
-// ── Wires ────────────────────────────────────────────────────────────
-function Wire({ pts, t, i }: { pts: Pt[]; t: MotionValue<number>; i: number }) {
-  const k = useTransform(t, (v) => mod(v / 2200 + i * 0.3, 1));
-  const p = useTransform(k, (kk) => along(pts, i < 2 ? kk : 1 - kk));
-  const cx_ = useTransform(p, (q) => q[0]);
-  const cy_ = useTransform(p, (q) => q[1]);
-  const opacity = useTransform(k, (kk) => Math.min(1, kk / 0.1, (1 - kk) / 0.1));
+// ── Dark openings in the floor ───────────────────────────────────────
+const CLOUD: [number, number, number][] = [
+  [150, 196, 34],
+  [192, 168, 36],
+  [222, 210, 34],
+  [180, 226, 30],
+];
+
+function Holes() {
   return (
     <g>
-      <path d={polyPath(pts)} fill="none" stroke={ACCENT} strokeWidth={2.2} strokeLinejoin="round" strokeLinecap="round" />
-      <motion.circle cx={cx_} cy={cy_} r={3.6} fill={ACCENT} stroke={INK} strokeWidth={1} style={{ opacity }} />
+      <g transform={topPlane(0)}>
+        <rect x={190} y={-90} width={115} height={110} rx={8} fill={SOLID} />
+        <rect x={-30} y={-175} width={130} height={90} rx={10} fill={SOLID} />
+        {CLOUD.map(([x, y, r]) => (
+          <circle key={`${x}${y}`} cx={x} cy={y} r={r + 2} fill={INK} />
+        ))}
+        {CLOUD.map(([x, y, r]) => (
+          <circle key={`${x}${y}f`} cx={x} cy={y} r={r} fill={SOLID} />
+        ))}
+      </g>
     </g>
   );
 }
 
-const GROUND: Pt[][] = [
-  [
-    [40, 300],
-    [70, 300],
-    [70, 110],
-  ],
-  [
-    [260, -20],
-    [150, -20],
-  ],
-];
+// ── Monitor with code scrolling up its face ──────────────────────────
+const MON = { x: -110, y: -125, w: 260, d: 14, z: 36, h: 170 };
 
-function GroundWires({ t }: { t: MotionValue<number> }) {
+function Monitor({ t }: { t: MotionValue<number> }) {
+  const id = useId().replace(/:/g, "");
+  const face = MON.y + MON.d;
+  const scroll = useTransform(t, (v) => mod(v / 40, 22));
+  const lines = Array.from({ length: 10 }, (_, i) => i);
   return (
-    <g transform={topPlane(0)}>
-      {GROUND.map((pts, i) => (
-        <GroundWire key={i} pts={pts} i={i} t={t} />
+    <g>
+      <IsoBox x={10} y={-140} z={0} w={36} d={14} h={MON.z} r={3} top={FILL_STRONG} />
+      <IsoBox {...MON} r={7} />
+      <g transform={wallY(face)}>
+        <defs>
+          <clipPath id={`mc${id}`} clipPathUnits="userSpaceOnUse">
+            <rect x={MON.x + 10} y={MON.z + 10} width={MON.w - 20} height={MON.h - 34} />
+          </clipPath>
+        </defs>
+        <rect x={MON.x + 6} y={MON.z + 6} width={MON.w - 12} height={MON.h - 12} rx={6} fill={PAPER} stroke={INK} strokeWidth={1.1} {...nss} />
+        <rect x={MON.x + 6} y={MON.z + MON.h - 24} width={MON.w - 12} height={18} rx={6} fill={FILL} stroke={INK} strokeWidth={1} {...nss} />
+        {[0, 1, 2].map((i) => (
+          <circle key={i} cx={MON.x + 18 + i * 10} cy={MON.z + MON.h - 15} r={3} fill={i === 0 ? ACCENT : PAPER} stroke={INK} strokeWidth={0.9} {...nss} />
+        ))}
+        <g clipPath={`url(#mc${id})`}>
+          <motion.g style={{ y: scroll }}>
+            {lines.map((i) => {
+              const v = MON.z + MON.h - 40 - i * 22;
+              const indent = [0, 16, 32, 16, 0, 16, 32, 32, 16, 0][i];
+              const len = [110, 140, 80, 160, 70, 120, 150, 60, 130, 90][i];
+              return (
+                <g key={i}>
+                  <rect x={MON.x + 22 + indent} y={v} width={len} height={6} rx={3} fill={i % 4 === 1 ? ACCENT : FILL_STRONG} />
+                  <rect x={MON.x + 22 + indent + len + 8} y={v} width={30} height={6} rx={3} fill={FILL} />
+                </g>
+              );
+            })}
+          </motion.g>
+        </g>
+      </g>
+    </g>
+  );
+}
+
+// ── Coffee cup with steam ────────────────────────────────────────────
+function Cup({ t }: { t: MotionValue<number> }) {
+  const [x, y] = [250, -150];
+  const [sx, sy] = project(x, y, 86);
+  return (
+    <g>
+      <Cylinder x={x} y={y} r={30} h={22} />
+      <Cylinder x={x} y={y} z={22} r={31} h={30} side={ACCENT} top={ACCENT} />
+      <Cylinder x={x} y={y} z={52} r={30} h={20} />
+      <Cylinder x={x} y={y} z={72} r={33} h={8} top={PAPER} />
+      <ellipse cx={sx + 8} cy={sy - 2} rx={5} ry={3} fill={SOLID} />
+      {[0, 1].map((i) => (
+        <Steam key={i} i={i} x={sx - 10 + i * 16} y={sy - 12} t={t} />
       ))}
     </g>
   );
 }
 
-function GroundWire({ pts, i, t }: { pts: Pt[]; i: number; t: MotionValue<number> }) {
-  const p = useTransform(t, (v) => along(pts, mod(v / 1800 + i * 0.5, 1)));
-  const x = useTransform(p, (q) => q[0] - 4);
-  const y = useTransform(p, (q) => q[1] - 4);
-  const mid = along(pts, 0.5);
+function Steam({ i, x, y, t }: { i: number; x: number; y: number; t: MotionValue<number> }) {
+  const k = useTransform(t, (v) => mod(v / 2200 + i * 0.5, 1));
+  const ty = useTransform(k, (p) => -p * 40);
+  const opacity = useTransform(k, (p) => Math.sin(p * Math.PI) * 0.7);
   return (
-    <g>
-      <path d={polyPath(pts)} fill="none" stroke={ACCENT} strokeWidth={2.2} strokeLinejoin="round" {...nss} />
-      <circle cx={mid[0]} cy={mid[1]} r={7} fill={PAPER} stroke={ACCENT} strokeWidth={2} {...nss} />
-      <motion.rect x={x} y={y} width={8} height={8} fill={ACCENT} stroke={INK} strokeWidth={1} {...nss} />
-    </g>
+    <motion.path
+      d={`M${x} ${y}c-8 -8 8 -14 0 -22c-8 -8 8 -14 0 -22`}
+      fill="none"
+      stroke={INK}
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      style={{ y: ty, opacity }}
+    />
   );
 }
 
-// ── Server stack + monitor ───────────────────────────────────────────
+// ── Stacked servers ──────────────────────────────────────────────────
 function ServerStack({ t }: { t: MotionValue<number> }) {
+  const box = { x: -260, y: 40, w: 66, d: 66, h: 30 };
   return (
     <g>
-      <Pad x={-150} y={-110} w={300} d={220} />
-      {[0, 1].map((i) => {
-        const z = PAD_H + i * 42;
+      {[0, 1, 2].map((i) => {
+        const z = i * 34;
         return (
           <g key={i}>
-            <IsoBox x={-110} y={-80} z={z} w={220} d={160} h={38} r={10} />
-            <g transform={wallY(80)}>
-              {[0, 1, 2, 3].map((k) => (
-                <rect key={k} x={-88 + k * 10} y={z + 10} width={4.5} height={18} rx={2.25} fill={SOLID} />
-              ))}
-            </g>
-            <g transform={wallX(110)}>
-              {[0, 1, 2].map((k) => (
-                <Led key={k} cx={-50 + k * 14} cy={z + 19} t={t} delay={(i * 3 + k) * 260} />
-              ))}
+            <IsoBox {...box} z={z} r={6} />
+            <g transform={wallY(box.y + box.d)}>
+              <rect x={box.x + 8} y={z + 9} width={36} height={12} rx={3} fill={SOLID} />
+              <Led cx={box.x + 54} cy={z + 15} t={t} delay={i * 420} />
             </g>
           </g>
         );
       })}
-      <IsoBox x={-120} y={-90} z={PAD_H + 84} w={240} d={180} h={6} r={12} {...ORANGE} />
-      <IsoBox x={-120} y={-90} z={PAD_H + 90} w={240} d={180} h={12} r={12} />
     </g>
   );
 }
 
-function Monitor({ t }: { t: MotionValue<number> }) {
-  const M = MON;
-  const top = M.z + M.h - 20;
-  const bars = [0, 1, 2, 3, 4, 5, 6];
-  const knob = useTransform(t, (v) => ease(Math.abs(Math.sin(v / 1400))) * 9);
-  const arc = useTransform(t, (v) => 0.35 + 0.4 * (0.5 + 0.5 * Math.sin(v / 1300)));
-  const card = (u: number, v: number, w: number, h: number) => (
-    <rect x={u} y={v} width={w} height={h} rx={5} fill="none" stroke={INK} strokeWidth={0.9} opacity={0.55} {...nss} />
-  );
+// ── Floating check tile that re-draws its tick ───────────────────────
+function CheckTile({ t }: { t: MotionValue<number> }) {
+  const tile = { x: -150, y: -20, w: 16, d: 74, z: 64, h: 74 };
+  const draw = useTransform(t, (v) => {
+    const p = mod(v, 3200) / 3200;
+    return 60 - clamp01((p - 0.1) / 0.25) * 60;
+  });
+  const face = tile.x + tile.w;
+  const u0 = tile.y;
   return (
-    <Window {...M}>
-      {/* Sidebar */}
-      <line x1={M.x + 46} x2={M.x + 46} y1={M.z + 3} y2={top} stroke={INK} strokeWidth={0.9} opacity={0.5} {...nss} />
-      {[0, 1, 2, 3].map((i) => (
-        <g key={i}>
-          <rect x={M.x + 10} y={top - 18 - i * 20} width={9} height={9} rx={2} fill={i === 0 ? ACCENT : FILL_STRONG} />
-          <rect x={M.x + 23} y={top - 15 - i * 20} width={i === 0 ? 17 : 12} height={3} rx={1.5} fill={i === 0 ? ACCENT : FILL_STRONG} />
-        </g>
-      ))}
-      {/* Bar chart card */}
-      {card(M.x + 52, top - 62, 112, 56)}
-      {bars.map((i) => (
-        <ChartBar key={i} i={i} t={t} u={M.x + 60 + i * 14} v={top - 56} />
-      ))}
-      {/* Donut card */}
-      {card(M.x + 168, top - 62, 106, 56)}
-      <circle cx={M.x + 192} cy={top - 34} r={14} fill="none" stroke={FILL} strokeWidth={7} />
-      <motion.circle cx={M.x + 192} cy={top - 34} r={14} fill="none" stroke={ACCENT} strokeWidth={7} style={{ pathLength: arc }} transform={`rotate(-90 ${M.x + 192} ${top - 34})`} />
-      {[0, 1, 2].map((i) => (
-        <g key={i}>
-          <circle cx={M.x + 218} cy={top - 22 - i * 12} r={2.4} fill={i === 0 ? ACCENT : FILL_STRONG} />
-          <rect x={M.x + 224} y={top - 23.5 - i * 12} width={40} height={3} rx={1.5} fill={FILL_STRONG} />
-        </g>
-      ))}
-      {/* Users + toggles */}
-      {card(M.x + 52, top - 114, 112, 46)}
-      <circle cx={M.x + 70} cy={top - 85} r={5} fill={ACCENT} />
-      <path d={`M${M.x + 61} ${top - 102}Q${M.x + 70} ${top - 90} ${M.x + 79} ${top - 102}Z`} fill={ACCENT} />
-      <circle cx={M.x + 60} cy={top - 88} r={3.5} fill={FILL_STRONG} />
-      <circle cx={M.x + 80} cy={top - 88} r={3.5} fill={FILL_STRONG} />
-      {[0, 1].map((i) => (
-        <g key={i}>
-          <rect x={M.x + 92} y={top - 82 - i * 16} width={30} height={3} rx={1.5} fill={FILL_STRONG} />
-          <rect x={M.x + 132} y={top - 86 - i * 16} width={24} height={11} rx={5.5} fill={i === 0 ? ACCENT : FILL} stroke={INK} strokeWidth={0.8} {...nss} />
-          <motion.circle cx={M.x + 138} cy={top - 80.5 - i * 16} r={4} fill={PAPER} stroke={INK} strokeWidth={0.8} style={{ x: i === 0 ? knob : 0 }} />
-        </g>
-      ))}
-      {/* Calendar card */}
-      {card(M.x + 168, top - 114, 106, 46)}
-      <rect x={M.x + 176} y={top - 104} width={22} height={22} rx={3} fill="none" stroke={INK} strokeWidth={1.1} {...nss} />
-      <rect x={M.x + 176} y={top - 88} width={22} height={6} fill={ACCENT} />
-      <rect x={M.x + 206} y={top - 88} width={52} height={3} rx={1.5} fill={FILL_STRONG} />
-      <rect x={M.x + 206} y={top - 96} width={36} height={3} rx={1.5} fill={FILL_STRONG} />
-      <rect x={M.x + 206} y={top - 109} width={56} height={9} rx={4.5} fill={ACCENT} />
-      {/* Module tiles */}
-      {[0, 1, 2, 3].map((k) => (
-        <g key={k}>
-          {card(M.x + 52 + k * 56, M.z + 8, 50, 26)}
-          {[0, 1, 2, 3].map((q) => (
-            <rect
-              key={q}
-              x={M.x + 68 + k * 56 + (q % 2) * 9}
-              y={M.z + 13 + Math.floor(q / 2) * 9}
-              width={7}
-              height={7}
-              rx={1.2}
-              fill={(q + k) % 3 === 0 ? ACCENT : FILL_STRONG}
-            />
-          ))}
-        </g>
-      ))}
-    </Window>
+    <Bob t={t} phase={0.6} amp={5}>
+      <IsoBox {...tile} r={6} />
+      <g transform={wallX(face)}>
+        <rect x={u0 + 9} y={tile.z + 9} width={tile.d - 18} height={tile.h - 18} rx={8} fill={SOLID} stroke={INK} strokeWidth={1} {...nss} />
+        <motion.path
+          d={`M${u0 + 56} ${tile.z + 40}L${u0 + 42} ${tile.z + 24}L${u0 + 18} ${tile.z + 54}`}
+          fill="none"
+          stroke={ACCENT}
+          strokeWidth={8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray={60}
+          style={{ strokeDashoffset: draw }}
+        />
+      </g>
+    </Bob>
   );
 }
 
-function ChartBar({ i, t, u, v }: { i: number; t: MotionValue<number>; u: number; v: number }) {
-  const base = 8 + i * 5.5;
-  const h = useTransform(t, (time) => base + 5 * Math.sin(time / 600 + i * 0.9) + 4);
-  return <motion.rect x={u} y={v} width={9} height={h} fill={ACCENT} />;
-}
-
-// ── Cloud ────────────────────────────────────────────────────────────
-const CLOUD = "M-72 22C-92 22 -94 -6 -72 -10C-74 -36 -40 -46 -26 -28C-18 -56 30 -60 38 -26C62 -34 84 -12 72 6C88 12 82 22 70 22Z";
-
-function Cloud({ t }: { t: MotionValue<number> }) {
-  const c: Pt = [30, -330];
-  const linkTop = c[1] + 22;
-  const linkBot = -272;
-  const pulse = useTransform(t, (v) => mod(v / 1200, 1));
-  const py = useTransform(pulse, (k) => linkTop + (linkBot - linkTop) * k);
+// ── Metrics bars with a hovering cube ────────────────────────────────
+function Bars({ t }: { t: MotionValue<number> }) {
   return (
     <g>
-      <line x1={c[0]} x2={c[0]} y1={linkTop} y2={linkBot} stroke={ACCENT} strokeWidth={2.2} />
-      <motion.circle cx={c[0]} cy={py} r={3} fill={ACCENT} />
-      <circle cx={c[0]} cy={(linkTop + linkBot) / 2} r={5} fill={PAPER} stroke={ACCENT} strokeWidth={2} />
-      <Bob t={t} phase={0.4} amp={4}>
-        <g transform={`translate(${c[0]} ${c[1]})`}>
-          <path d={CLOUD} transform="translate(9 7)" fill="var(--iso-wall-r1)" stroke={INK} strokeWidth={1.2} />
-          <path d={CLOUD} fill={PAPER} stroke={INK} strokeWidth={1.2} />
-          {[0, 1, 2].map((i) => (
-            <g key={i}>
-              <rect x={-24} y={-26 + i * 14} width={48} height={11} rx={3} fill={PAPER} stroke={INK} strokeWidth={1.1} />
-              <Led cx={16} cy={-20.5 + i * 14} t={t} delay={i * 300} period={1100} />
-            </g>
-          ))}
-        </g>
+      {[0, 1, 2].map((i) => (
+        <Bar key={i} i={i} t={t} />
+      ))}
+      <Bob t={t} amp={6} speed={600}>
+        <IsoBox x={-128} y={30} z={70} w={16} d={16} h={16} r={2} {...ORANGE} />
       </Bob>
     </g>
   );
 }
 
-// ── Side windows ─────────────────────────────────────────────────────
-function TilesWindow({ t }: { t: MotionValue<number> }) {
-  const W = WIN_L1;
-  const lit = useTransform(t, (v) => Math.floor(mod(v / 1500, 4)));
-  return (
-    <Window {...W}>
-      {[0, 1, 2, 3].map((q) => (
-        <Tile key={q} q={q} lit={lit} u={W.x + 30 + (q % 2) * 26} v={W.z + 38 - Math.floor(q / 2) * 26} />
-      ))}
-    </Window>
-  );
+function Bar({ i, t }: { i: number; t: MotionValue<number> }) {
+  const h = useValue(useTransform(t, (v) => Math.round(28 + i * 18 + 10 * Math.sin(v / 800 + i * 1.3))));
+  return <IsoBox x={-130 + i * 22} y={30} w={18} d={18} h={h} r={2} />;
 }
 
-function Tile({ q, lit, u, v }: { q: number; lit: MotionValue<number>; u: number; v: number }) {
-  const opacity = useTransform(lit, (l) => (l === q ? 1 : 0));
+// ── Server tower with a shield on top ────────────────────────────────
+const TOWER = { x: -10, y: 30, w: 60, d: 60, h: 150 };
+
+function Tower({ t }: { t: MotionValue<number> }) {
+  const face = TOWER.y + TOWER.d;
+  const slots = Array.from({ length: 9 }, (_, i) => i);
   return (
     <g>
-      <rect x={u} y={v} width={22} height={22} rx={4} fill={FILL_STRONG} stroke={INK} strokeWidth={0.9} {...nss} />
-      <motion.rect x={u} y={v} width={22} height={22} rx={4} fill={ACCENT} stroke={INK} strokeWidth={0.9} style={{ opacity }} {...nss} />
-    </g>
-  );
-}
-
-function ListWindow({ t }: { t: MotionValue<number> }) {
-  const W = WIN_L2;
-  return (
-    <Window {...W}>
-      {[0, 1, 2].map((i) => (
-        <ListRow key={i} i={i} t={t} u={W.x + 14} v={W.z + W.h - 34 - i * 17} w={W.w - 30} />
-      ))}
-    </Window>
-  );
-}
-
-function ListRow({ i, t, u, v, w }: { i: number; t: MotionValue<number>; u: number; v: number; w: number }) {
-  const len = useTransform(t, (time) => (w - 18) * (0.45 + 0.55 * ease(span(mod(time + i * 500, 3200), 0, 900))));
-  return (
-    <g>
-      <circle cx={u} cy={v} r={3.6} fill={ACCENT} />
-      <rect x={u + 10} y={v - 2} width={w - 18} height={4} rx={2} fill={FILL} />
-      <motion.rect x={u + 10} y={v - 2} width={len} height={4} rx={2} fill={FILL_STRONG} />
-    </g>
-  );
-}
-
-function VideoWindow({ t }: { t: MotionValue<number> }) {
-  const W = WIN_R1;
-  const prog = useTransform(t, (v) => mod(v / 5000, 1));
-  const dot = useTransform(prog, (p) => W.x + 18 + p * (W.w - 36));
-  const bar = useTransform(prog, (p) => p * (W.w - 36));
-  const pv = W.z + 14;
-  return (
-    <Window {...W}>
-      <rect x={W.x + 14} y={W.z + 22} width={W.w - 28} height={42} rx={4} fill="none" stroke={INK} strokeWidth={1} {...nss} />
-      <path d={`M${W.x + W.w / 2 - 6} ${W.z + 53}L${W.x + W.w / 2 - 6} ${W.z + 33}L${W.x + W.w / 2 + 10} ${W.z + 43}Z`} fill={ACCENT} />
-      <rect x={W.x + 18} y={pv - 1.5} width={W.w - 36} height={3} rx={1.5} fill={FILL} />
-      <motion.rect x={W.x + 18} y={pv - 1.5} width={bar} height={3} rx={1.5} fill={ACCENT} />
-      <motion.circle cx={dot} cy={pv} r={4} fill={ACCENT} stroke={INK} strokeWidth={0.8} />
-    </Window>
-  );
-}
-
-function ImageWindow() {
-  const W = WIN_R2;
-  return (
-    <Window {...W}>
-      <rect x={W.x + 12} y={W.z + 14} width={40} height={44} rx={4} fill="none" stroke={INK} strokeWidth={1} {...nss} />
-      <path d={`M${W.x + 16} ${W.z + 20}L${W.x + 27} ${W.z + 38}L${W.x + 33} ${W.z + 30}L${W.x + 48} ${W.z + 20}Z`} fill={ACCENT} />
-      <circle cx={W.x + 40} cy={W.z + 47} r={3.5} fill={FILL_STRONG} />
-      {[0, 1, 2, 3].map((i) => (
-        <rect key={i} x={W.x + 60} y={W.z + 50 - i * 10} width={i === 3 ? 26 : 36} height={4} rx={2} fill={FILL_STRONG} />
-      ))}
-    </Window>
-  );
-}
-
-// ── Modules + storage ────────────────────────────────────────────────
-function Modules() {
-  return (
-    <g>
-      <Pad x={-80} y={260} w={120} d={110} />
-      <Cube x={-45} y={290} z={PAD_H} s={34} />
-      <Cube x={-45} y={290} z={PAD_H + 34} s={34} />
-      <Cube x={-5} y={300} z={PAD_H} s={34} />
-      <Cube x={-35} y={335} z={PAD_H} s={34} accent />
-    </g>
-  );
-}
-
-function Storage({ t }: { t: MotionValue<number> }) {
-  const c = { x: 317, y: -15 };
-  return (
-    <g>
-      <Pad x={260} y={-70} w={115} d={110} />
-      {[0, 1, 2].map((i) => {
-        const z = PAD_H + i * 28;
-        const led = project(c.x + 22, c.y + 22, z + 13);
-        return (
+      <IsoBox {...TOWER} r={6} />
+      <g transform={wallY(face)}>
+        <rect x={TOWER.x + 8} y={12} width={TOWER.w - 16} height={TOWER.h - 30} rx={4} fill={SOLID} />
+        {slots.map((i) => (
           <g key={i}>
-            <Cylinder x={c.x} y={c.y} z={z} r={32} h={26} />
-            <Led cx={led[0]} cy={led[1]} t={t} delay={-i * 380} period={1140} />
+            <rect x={TOWER.x + 13} y={18 + i * 12.5} width={TOWER.w - 34} height={7} rx={1.5} fill={PAPER} />
+            <Led cx={TOWER.x + TOWER.w - 15} cy={21.5 + i * 12.5} t={t} delay={i * 260} period={1100} />
           </g>
-        );
-      })}
+        ))}
+      </g>
+      <g transform={wallX(TOWER.x + TOWER.w)}>
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <rect key={i} x={TOWER.y + 12} y={30 + i * 16} width={TOWER.d - 24} height={5} rx={2.5} fill={FILL_STRONG} />
+        ))}
+      </g>
+      <Bob t={t} phase={2} amp={6}>
+        <Shield />
+      </Bob>
     </g>
   );
 }
+
+const SHIELD = "M-24 0L24 0L24 -30Q24 -56 0 -66Q-24 -56 -24 -30Z";
+
+function Shield() {
+  const u = TOWER.x + TOWER.w / 2;
+  const v = TOWER.h + 84;
+  const shape = (fill: string, extra = {}) => <path d={SHIELD} transform={`translate(${u} ${v})`} fill={fill} {...extra} />;
+  return (
+    <Extrude
+      plane={wallY}
+      from={TOWER.y + 18}
+      to={TOWER.y + 30}
+      shape={(f) => shape(f)}
+      face={
+        <g>
+          {shape(ACCENT, { stroke: INK, strokeWidth: 1.2, vectorEffect: "non-scaling-stroke" })}
+          <rect x={u - 9} y={v - 46} width={18} height={15} rx={2} fill={SOLID} />
+          <path d={`M${u - 6} ${v - 31}v6a6 6 0 0 0 12 0v-6`} fill="none" stroke={SOLID} strokeWidth={3} />
+          <circle cx={u} cy={v - 39} r={2.4} fill={ON_ACCENT} />
+        </g>
+      }
+    />
+  );
+}
+
+// ── Billing card lying on the floor ──────────────────────────────────
+function BillingCard({ t }: { t: MotionValue<number> }) {
+  const glow = useTransform(t, (v) => 0.4 + 0.6 * Math.max(0, Math.sin(v / 700)));
+  return (
+    <g>
+      <IsoBox x={-215} y={170} z={0} w={60} d={84} h={5} r={6} top={ACCENT_SOFT} />
+      <g transform={topPlane(5)}>
+        <rect x={-206} y={180} width={42} height={64} rx={4} fill="none" stroke={ACCENT} strokeWidth={1.5} {...nss} />
+        <rect x={-200} y={188} width={14} height={12} rx={2} fill={ACCENT} stroke={INK} strokeWidth={0.9} {...nss} />
+        <motion.rect x={-200} y={214} width={30} height={5} rx={2.5} fill={ACCENT} style={{ opacity: glow }} />
+        <rect x={-200} y={224} width={20} height={5} rx={2.5} fill={FILL_STRONG} />
+      </g>
+    </g>
+  );
+}
+
+// ── Phone lying flat, notifications sliding in ───────────────────────
+function Phone({ t }: { t: MotionValue<number> }) {
+  const id = useId().replace(/:/g, "");
+  const slide = useTransform(t, (v) => {
+    const p = mod(v, 3000) / 3000;
+    return -40 + clamp01(p / 0.2) * 52 - clamp01((p - 0.85) / 0.15) * 12;
+  });
+  const P = { x: -80, y: 180, w: 130, d: 62 };
+  return (
+    <g>
+      <IsoBox {...P} h={9} r={10} />
+      <g transform={topPlane(9)}>
+        <defs>
+          <clipPath id={`ph${id}`} clipPathUnits="userSpaceOnUse">
+            <rect x={P.x + 8} y={P.y + 6} width={P.w - 16} height={P.d - 12} rx={6} />
+          </clipPath>
+        </defs>
+        <rect x={P.x + 8} y={P.y + 6} width={P.w - 16} height={P.d - 12} rx={6} fill={SOLID} />
+        <g clipPath={`url(#ph${id})`}>
+          <motion.g style={{ x: slide }}>
+            <rect x={P.x + 30} y={P.y + 14} width={50} height={34} rx={4} fill={PAPER} stroke={INK} strokeWidth={0.9} {...nss} />
+            <rect x={P.x + 36} y={P.y + 20} width={10} height={10} rx={2} fill={ACCENT} />
+            <rect x={P.x + 36} y={P.y + 35} width={34} height={4} rx={2} fill={FILL_STRONG} />
+          </motion.g>
+        </g>
+      </g>
+    </g>
+  );
+}
+
+// ── Upload arrow rising out of the cloud opening ─────────────────────
+const ARROW = "M-14 0L14 0L14 40L30 40L0 72L-30 40L-14 40Z";
+
+function Upload({ t }: { t: MotionValue<number> }) {
+  const id = useId().replace(/:/g, "");
+  const k = useTransform(t, (v) => mod(v / 2600, 1));
+  const lift = useTransform(k, (p) => -70 + p * 100);
+  const opacity = useTransform(k, (p) => clamp01((1 - p) / 0.2));
+  const c = 198;
+  const u = 186;
+  const arrow = (fill: string, extra = {}) => <path d={ARROW} fill={fill} {...extra} />;
+  // Only the part above the floor (v > -6) is visible: it is seen through the opening.
+  return (
+    <g>
+      <defs>
+        <clipPath id={`up${id}`} clipPathUnits="userSpaceOnUse">
+          <rect x={u - 60} y={-6} width={120} height={200} />
+        </clipPath>
+      </defs>
+      <motion.g style={{ opacity }}>
+        <Extrude
+          plane={(cc) => wallY(cc)}
+          from={c - 16}
+          to={c}
+          shape={(f) => (
+            <g clipPath={`url(#up${id})`}>
+              <motion.g style={{ y: lift }}>
+                <g transform={`translate(${u} 0)`}>{arrow(f)}</g>
+              </motion.g>
+            </g>
+          )}
+          face={
+            <g clipPath={`url(#up${id})`}>
+              <motion.g style={{ y: lift }}>
+                <g transform={`translate(${u} 0)`}>{arrow(ACCENT, { stroke: INK, strokeWidth: 1.2, vectorEffect: "non-scaling-stroke" })}</g>
+              </motion.g>
+            </g>
+          }
+        />
+      </motion.g>
+    </g>
+  );
+}
+
